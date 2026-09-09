@@ -1,8 +1,100 @@
+'use client'
+
+import { useReducer } from 'react'
+
+import ErrorBanner from '../components/ErrorBanner.jsx'
+import PromptInput from '../components/PromptInput.jsx'
+import Spinner from '../components/Spinner.jsx'
+import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
+
+const ERROR_MESSAGES = {
+  rate_limited: 'You have reached the hourly limit. Try again later.',
+  too_long: 'That prompt is too long. Shorten it and try again.',
+  upstream_timeout: 'The optimizer took too long to respond. Try again.',
+  upstream_error: 'The optimizer is unavailable right now. Try again.',
+  invalid_response: 'The optimizer returned an unusable response. Try again.',
+}
+
 export default function HomePage() {
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+
+  async function runOptimize(request) {
+    dispatch({ type: 'START', request })
+
+    try {
+      const response = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(request),
+      })
+      const body = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        dispatch({ type: 'FAIL', error: body?.error ?? 'upstream_error' })
+        return
+      }
+
+      if (body?.status === 'needs_clarification' && Array.isArray(body.questions)) {
+        dispatch({ type: 'CLARIFY', questions: body.questions })
+        return
+      }
+
+      if (body?.status === 'ready' && typeof body.optimizedPrompt === 'string') {
+        dispatch({ type: 'RESULT', optimizedPrompt: body.optimizedPrompt })
+        return
+      }
+
+      dispatch({ type: 'FAIL', error: 'invalid_response' })
+    } catch {
+      dispatch({ type: 'FAIL', error: 'upstream_error' })
+    }
+  }
+
+  function submitPrompt() {
+    if (!state.prompt.trim() || state.prompt.length > 8_000) return
+    runOptimize({ prompt: state.prompt, clarifications: [] })
+  }
+
   return (
-    <main>
-      <h1>Sharpen your prompt</h1>
-      <p>Web flow intentionally starts after the optimizer evals pass.</p>
+    <main className="app-shell">
+      <div className="brand">Prompt sharpener</div>
+
+      {state.phase === PHASE.INPUT && (
+        <section className="input-screen" aria-labelledby="page-title">
+          <h1 id="page-title">Sharpen your prompt</h1>
+          <p className="supporting-copy">
+            Turn a rough idea into a clear prompt without changing what you mean.
+          </p>
+          <PromptInput
+            value={state.prompt}
+            onChange={(prompt) => dispatch({ type: 'EDIT', prompt })}
+            onSubmit={submitPrompt}
+          />
+        </section>
+      )}
+
+      {state.phase === PHASE.LOADING && <Spinner />}
+
+      {state.phase === PHASE.CLARIFY && (
+        <section className="phase-panel" aria-live="polite">
+          <h2>A few details would help</h2>
+          <p>{state.questions.length} clarification question(s) ready for the next screen.</p>
+        </section>
+      )}
+
+      {state.phase === PHASE.RESULT && (
+        <section className="phase-panel" aria-live="polite">
+          <h2>Your prompt is ready</h2>
+          <p>Result controls arrive in the next screen.</p>
+        </section>
+      )}
+
+      {state.phase === PHASE.ERROR && (
+        <ErrorBanner
+          message={ERROR_MESSAGES[state.error] ?? ERROR_MESSAGES.upstream_error}
+          onRetry={() => state.retryRequest && runOptimize(state.retryRequest)}
+        />
+      )}
     </main>
   )
 }
