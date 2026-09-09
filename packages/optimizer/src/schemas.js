@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export const MAX_REQUEST_BYTES = 20_000
+
 export const questionTypeSchema = z.enum([
   'single_select',
   'multi_select',
@@ -22,7 +24,7 @@ export const optimizeRequestSchema = z
     clarifications: z.array(clarificationSchema).max(8).default([]),
   })
   .superRefine((value, ctx) => {
-    if (JSON.stringify(value).length > 20_000) {
+    if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_REQUEST_BYTES) {
       ctx.addIssue({
         code: 'custom',
         message: 'Request body is too large',

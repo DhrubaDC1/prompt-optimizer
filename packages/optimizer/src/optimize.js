@@ -97,6 +97,12 @@ function parseAssistantContent(content, isFinal) {
 function mapGroqError(error) {
   if (error instanceof OptimizerError) return error
 
+  if (error instanceof Groq.RateLimitError || error?.status === 429) {
+    return new OptimizerError('rate_limited', 'Groq rate limit exceeded', {
+      cause: error,
+    })
+  }
+
   if (
     error instanceof Groq.APIUserAbortError ||
     error?.name === 'APIConnectionTimeoutError' ||
@@ -186,6 +192,12 @@ export async function optimize(prompt, clarifications = []) {
         throw error
       }
     }
+  }
+
+  if (lastError?.code === 'validation_error') {
+    throw new OptimizerError('invalid_response', 'Groq returned an invalid response', {
+      cause: lastError,
+    })
   }
 
   throw lastError ?? new OptimizerError('invalid_response', 'Groq returned an invalid response')
