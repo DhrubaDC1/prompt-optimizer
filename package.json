@@ -1,0 +1,14 @@
+{
+  "name": "prompt-optimizer",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @prompt-optimizer/web dev",
+    "build": "pnpm --filter @prompt-optimizer/web build",
+    "start": "pnpm --filter @prompt-optimizer/web start",
+    "eval": "pnpm --filter @prompt-optimizer/optimizer eval"
+  }
+}

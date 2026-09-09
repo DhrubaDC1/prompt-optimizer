@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@optimizer/*": ["../../packages/optimizer/src/*"]
+    }
+  }
+}

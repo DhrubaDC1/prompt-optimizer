@@ -1,0 +1,18 @@
+{
+  "name": "@prompt-optimizer/optimizer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/optimize.js",
+    "./schemas": "./src/schemas.js",
+    "./prompts": "./src/prompts.js"
+  },
+  "scripts": {
+    "eval": "node --env-file-if-exists=../../.env evals/run.js"
+  },
+  "dependencies": {
+    "groq-sdk": "1.6.0",
+    "zod": "4.5.4"
+  }
+}
