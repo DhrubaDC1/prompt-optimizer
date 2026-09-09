@@ -31,6 +31,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -154,7 +155,8 @@ h1 {
 }
 
 .form-footer button,
-.error-banner button {
+.error-banner button,
+.primary-button {
   display: inline-flex;
   min-height: 48px;
   align-items: center;
@@ -167,12 +169,17 @@ h1 {
 }
 
 .form-footer button:hover:not(:disabled),
-.error-banner button:hover {
+.error-banner button:hover,
+.primary-button:hover:not(:disabled) {
   background: var(--cobalt-dark);
 }
 
 .form-footer button:focus-visible,
-.error-banner button:focus-visible {
+.error-banner button:focus-visible,
+.clarification-actions button:focus-visible,
+.choice:has(input:focus-visible),
+.text-answer:focus-visible,
+.other-input:focus-visible {
   outline: 3px solid rgba(79, 91, 213, 0.35);
   outline-offset: 3px;
 }
@@ -180,6 +187,150 @@ h1 {
 .form-footer button:disabled {
   cursor: not-allowed;
   opacity: 0.42;
+}
+
+.clarification-screen {
+  margin-top: clamp(72px, 13vh, 140px);
+  outline: 0;
+}
+
+.progress-copy {
+  margin-bottom: 9px;
+  color: var(--cobalt-dark);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.clarification-screen progress {
+  display: block;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  border: 0;
+  background: var(--line);
+  color: var(--cobalt);
+}
+
+.clarification-screen progress::-webkit-progress-bar {
+  background: var(--line);
+}
+
+.clarification-screen progress::-webkit-progress-value {
+  background: var(--cobalt);
+}
+
+.clarification-screen progress::-moz-progress-bar {
+  background: var(--cobalt);
+}
+
+.clarification-form {
+  margin-top: 52px;
+}
+
+.clarification-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.clarification-form legend {
+  max-width: 780px;
+  margin-bottom: 34px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: clamp(2.25rem, 5.5vw, 4.6rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.choices {
+  display: grid;
+  gap: 10px;
+  max-width: 680px;
+}
+
+.choices-inline {
+  grid-template-columns: repeat(2, minmax(0, 180px));
+}
+
+.choice {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--cobalt);
+  box-shadow: inset 4px 0 var(--cobalt);
+}
+
+.choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--cobalt);
+}
+
+.text-answer,
+.other-input {
+  width: min(100%, 680px);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 15px 16px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 17px;
+}
+
+textarea.text-answer {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.other-input {
+  margin-top: 2px;
+}
+
+.other-input:disabled {
+  background: #e6e9f0;
+  cursor: not-allowed;
+}
+
+.clarification-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 48px;
+}
+
+.clarification-actions button {
+  min-height: 48px;
+  padding: 0 20px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.clarification-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.text-button {
+  margin-left: auto;
+  background: transparent;
+  color: var(--cobalt-dark);
 }
 
 .shortcut {
@@ -311,6 +462,18 @@ h1 {
   .error-banner button {
     justify-content: center;
     margin-right: 0;
+  }
+
+  .clarification-actions {
+    flex-wrap: wrap;
+  }
+
+  .text-button {
+    margin-left: 0;
+  }
+
+  .primary-button {
+    margin-left: auto;
   }
 }
 

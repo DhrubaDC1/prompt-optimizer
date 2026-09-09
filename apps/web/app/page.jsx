@@ -2,6 +2,7 @@
 
 import { useReducer } from 'react'
 
+import ClarificationForm from '../components/ClarificationForm.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
 import PromptInput from '../components/PromptInput.jsx'
 import Spinner from '../components/Spinner.jsx'
@@ -34,7 +35,11 @@ export default function HomePage() {
         return
       }
 
-      if (body?.status === 'needs_clarification' && Array.isArray(body.questions)) {
+      if (
+        request.clarifications.length === 0 &&
+        body?.status === 'needs_clarification' &&
+        Array.isArray(body.questions)
+      ) {
         dispatch({ type: 'CLARIFY', questions: body.questions })
         return
       }
@@ -53,6 +58,10 @@ export default function HomePage() {
   function submitPrompt() {
     if (!state.prompt.trim() || state.prompt.length > 8_000) return
     runOptimize({ prompt: state.prompt, clarifications: [] })
+  }
+
+  function submitClarifications(clarifications) {
+    runOptimize({ prompt: state.originalPrompt, clarifications })
   }
 
   return (
@@ -76,10 +85,13 @@ export default function HomePage() {
       {state.phase === PHASE.LOADING && <Spinner />}
 
       {state.phase === PHASE.CLARIFY && (
-        <section className="phase-panel" aria-live="polite">
-          <h2>A few details would help</h2>
-          <p>{state.questions.length} clarification question(s) ready for the next screen.</p>
-        </section>
+        <ClarificationForm
+          questions={state.questions}
+          answers={state.answers}
+          index={state.index}
+          dispatch={dispatch}
+          onSubmit={submitClarifications}
+        />
       )}
 
       {state.phase === PHASE.RESULT && (
