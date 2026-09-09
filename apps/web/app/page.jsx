@@ -5,6 +5,7 @@ import { useReducer } from 'react'
 import ClarificationForm from '../components/ClarificationForm.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
 import PromptInput from '../components/PromptInput.jsx'
+import ResultView from '../components/ResultView.jsx'
 import Spinner from '../components/Spinner.jsx'
 import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
 
@@ -19,8 +20,8 @@ const ERROR_MESSAGES = {
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  async function runOptimize(request) {
-    dispatch({ type: 'START', request })
+  async function runOptimize(request, replaceOriginal = false) {
+    dispatch({ type: 'START', request, replaceOriginal })
 
     try {
       const response = await fetch('/api/optimize', {
@@ -57,11 +58,11 @@ export default function HomePage() {
 
   function submitPrompt() {
     if (!state.prompt.trim() || state.prompt.length > 8_000) return
-    runOptimize({ prompt: state.prompt, clarifications: [] })
+    runOptimize({ prompt: state.prompt, clarifications: [] }, true)
   }
 
   function submitClarifications(clarifications) {
-    runOptimize({ prompt: state.originalPrompt, clarifications })
+    runOptimize({ prompt: state.requestPrompt, clarifications })
   }
 
   return (
@@ -95,10 +96,14 @@ export default function HomePage() {
       )}
 
       {state.phase === PHASE.RESULT && (
-        <section className="phase-panel" aria-live="polite">
-          <h2>Your prompt is ready</h2>
-          <p>Result controls arrive in the next screen.</p>
-        </section>
+        <ResultView
+          value={state.optimizedPrompt}
+          onChange={(optimizedPrompt) => dispatch({ type: 'EDIT_RESULT', optimizedPrompt })}
+          onStartOver={() => dispatch({ type: 'START_OVER' })}
+          onResubmit={() =>
+            runOptimize({ prompt: state.optimizedPrompt, clarifications: [] })
+          }
+        />
       )}
 
       {state.phase === PHASE.ERROR && (

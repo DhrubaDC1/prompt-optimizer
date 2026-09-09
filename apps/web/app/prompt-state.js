@@ -13,6 +13,7 @@ export const INITIAL_STATE = {
   questions: [],
   answers: {},
   index: 0,
+  requestPrompt: '',
   optimizedPrompt: '',
   error: null,
   retryRequest: null,
@@ -48,7 +49,11 @@ export function reducer(state, action) {
       return {
         ...state,
         phase: PHASE.LOADING,
-        originalPrompt: state.originalPrompt || action.request.prompt,
+        originalPrompt:
+          action.replaceOriginal || !state.originalPrompt
+            ? action.request.prompt
+            : state.originalPrompt,
+        requestPrompt: action.request.prompt,
         error: null,
         retryRequest: action.request,
       }
@@ -74,6 +79,14 @@ export function reducer(state, action) {
         ...state,
         phase: PHASE.RESULT,
         optimizedPrompt: action.optimizedPrompt,
+      }
+    case 'EDIT_RESULT':
+      return { ...state, optimizedPrompt: action.optimizedPrompt }
+    case 'START_OVER':
+      return {
+        ...INITIAL_STATE,
+        prompt: state.originalPrompt,
+        originalPrompt: state.originalPrompt,
       }
     case 'FAIL':
       return { ...state, phase: PHASE.ERROR, error: action.error }

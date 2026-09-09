@@ -60,3 +60,20 @@ test('serializes answered questions and forces a final sole-question round', () 
     { questionId: 'q_type', answer: '' },
   ])
 })
+
+test('edits result and starts over with original rough prompt', () => {
+  const roughPrompt = 'Make a dashboard'
+  const loading = reducer(INITIAL_STATE, {
+    type: 'START',
+    request: { prompt: roughPrompt, clarifications: [] },
+    replaceOriginal: true,
+  })
+  const result = reducer(loading, { type: 'RESULT', optimizedPrompt: 'Build a dashboard.' })
+  const edited = reducer(result, { type: 'EDIT_RESULT', optimizedPrompt: 'Build a clear dashboard.' })
+  const restarted = reducer(edited, { type: 'START_OVER' })
+
+  assert.equal(edited.optimizedPrompt, 'Build a clear dashboard.')
+  assert.equal(restarted.phase, PHASE.INPUT)
+  assert.equal(restarted.prompt, roughPrompt)
+  assert.equal(restarted.originalPrompt, roughPrompt)
+})

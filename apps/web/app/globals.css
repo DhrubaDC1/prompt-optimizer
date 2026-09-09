@@ -177,9 +177,11 @@ h1 {
 .form-footer button:focus-visible,
 .error-banner button:focus-visible,
 .clarification-actions button:focus-visible,
+.result-actions button:focus-visible,
 .choice:has(input:focus-visible),
 .text-answer:focus-visible,
-.other-input:focus-visible {
+.other-input:focus-visible,
+.result-editor:focus-visible {
   outline: 3px solid rgba(79, 91, 213, 0.35);
   outline-offset: 3px;
 }
@@ -192,6 +194,92 @@ h1 {
 .clarification-screen {
   margin-top: clamp(72px, 13vh, 140px);
   outline: 0;
+}
+
+.result-screen {
+  margin-top: clamp(72px, 13vh, 140px);
+}
+
+.result-screen h1 {
+  max-width: 820px;
+  margin-bottom: 34px;
+}
+
+.result-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 10px;
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.result-label span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.result-editor {
+  display: block;
+  width: 100%;
+  min-height: 330px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 25px 28px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      rgba(79, 91, 213, 0.09) 31px,
+      rgba(79, 91, 213, 0.09) 32px
+    ),
+    var(--paper);
+  background-position: 0 26px;
+  box-shadow: 0 24px 70px rgba(32, 43, 84, 0.1);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 32px;
+}
+
+.result-footer {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.copy-status {
+  margin: 0;
+  color: var(--cobalt-dark);
+  font-size: 0.9rem;
+}
+
+.result-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.result-actions button {
+  min-height: 48px;
+  padding: 0 20px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.result-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.start-over {
+  margin-left: 0;
 }
 
 .progress-copy {
@@ -473,6 +561,30 @@ textarea.text-answer {
   }
 
   .primary-button {
+    margin-left: auto;
+  }
+
+  .result-label,
+  .result-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .result-editor {
+    min-height: 300px;
+    padding: 21px 20px;
+  }
+
+  .result-footer {
+    padding-top: 16px;
+  }
+
+  .result-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .result-actions .primary-button {
     margin-left: auto;
   }
 }
