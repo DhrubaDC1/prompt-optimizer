@@ -185,8 +185,25 @@ const finalModelWireSchema = z.object({
 export const openModelJsonSchema = z.toJSONSchema(openModelWireSchema)
 export const finalModelJsonSchema = z.toJSONSchema(finalModelWireSchema)
 
+// Models occasionally set allowOther/options on non-select questions even though
+// the prompt says not to. Those fields are meaningless for non-select types (the
+// UI never reads them), so normalize instead of rejecting a response over it.
+function normalizeQuestion(question) {
+  if (!question || typeof question !== 'object') return question
+
+  const isSelect = question.type === 'single_select' || question.type === 'multi_select'
+  if (isSelect) return question
+
+  return { ...question, options: null, allowOther: false }
+}
+
 export function parseOpenModelResponse(value) {
-  const parsed = openModelResponseSchema.parse(value)
+  const normalized =
+    value && Array.isArray(value.questions)
+      ? { ...value, questions: value.questions.map(normalizeQuestion) }
+      : value
+
+  const parsed = openModelResponseSchema.parse(normalized)
 
   if (parsed.status === 'needs_clarification') {
     return {

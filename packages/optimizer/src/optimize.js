@@ -105,7 +105,7 @@ function mapGroqError(error) {
 
   if (
     error instanceof Groq.APIUserAbortError ||
-    error?.name === 'APIConnectionTimeoutError' ||
+    error instanceof Groq.APIConnectionTimeoutError ||
     error?.name === 'AbortError' ||
     error?.code === 'ABORT_ERR'
   ) {
