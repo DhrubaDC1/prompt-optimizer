@@ -13,7 +13,7 @@ import { watchClarificationAbandonment } from './clarification-abandonment.js'
 import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
 
 const ERROR_MESSAGES = {
-  rate_limited: 'You have reached the hourly limit. Try again later.',
+  rate_limited: 'The optimizer is busy right now. Wait a moment and try again.',
   too_long: 'That prompt is too long. Shorten it and try again.',
   upstream_timeout: 'The optimizer took too long to respond. Try again.',
   upstream_error: 'The optimizer is unavailable right now. Try again.',

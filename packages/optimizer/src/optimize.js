@@ -98,6 +98,14 @@ function mapGroqError(error) {
   if (error instanceof OptimizerError) return error
 
   if (error instanceof Groq.RateLimitError || error?.status === 429) {
+    console.error('groq_429', {
+      message: error?.message,
+      body: error?.error,
+      limit: error?.headers?.get?.('x-ratelimit-limit-tokens'),
+      remaining: error?.headers?.get?.('x-ratelimit-remaining-tokens'),
+      reset: error?.headers?.get?.('x-ratelimit-reset-tokens'),
+    })
+
     return new OptimizerError('rate_limited', 'Groq rate limit exceeded', {
       cause: error,
     })
