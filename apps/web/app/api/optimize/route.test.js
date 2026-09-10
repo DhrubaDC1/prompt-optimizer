@@ -2,28 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 process.env.GROQ_API_KEY = 'test-key'
-process.env.UPSTASH_REDIS_REST_URL = 'https://upstash.test'
-process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token'
 
 let fetchMode = 'valid'
-let limitMode = 'allow'
 let groqCalls = 0
-let limitCalls = 0
-let lastLimitCommand
 const originalFetch = globalThis.fetch
 
 globalThis.fetch = async (url, init) => {
-  if (String(url).startsWith('https://upstash.test')) {
-    limitCalls += 1
-    lastLimitCommand = JSON.parse(init.body)
-
-    if (limitMode === 'error') {
-      return Response.json({ error: 'private Upstash detail' }, { status: 500 })
-    }
-
-    return Response.json({ result: [limitMode === 'deny' ? -1 : 9, 10] })
-  }
-
   groqCalls += 1
 
   if (fetchMode === 'rate_limited') {
@@ -62,9 +46,8 @@ globalThis.fetch = async (url, init) => {
 
 const { POST } = await import('./route.js')
 
-function request(body, forwardedFor) {
+function request(body) {
   const headers = { 'content-type': 'application/json' }
-  if (forwardedFor) headers['x-forwarded-for'] = forwardedFor
 
   return new Request('http://localhost/api/optimize', {
     method: 'POST',
@@ -86,10 +69,7 @@ test.after(() => {
 })
 
 function resetCalls() {
-  limitMode = 'allow'
   groqCalls = 0
-  limitCalls = 0
-  lastLimitCommand = undefined
 }
 
 test('rejects invalid prompt before Groq', async () => {
@@ -99,7 +79,6 @@ test('rejects invalid prompt before Groq', async () => {
   assert.equal(response.status, 400)
   assert.deepEqual(await response.json(), { error: 'invalid_response' })
   assert.equal(groqCalls, 0)
-  assert.equal(limitCalls, 1)
 })
 
 test('rejects oversized prompt before Groq', async () => {
@@ -197,57 +176,4 @@ test('maps optimizer failures without provider details', async () => {
   assert.equal(response.status, 429)
   assert.deepEqual(await response.json(), { error: 'rate_limited' })
   assert.equal(groqCalls, 1)
-})
-
-test('uses sliding-window limit and first valid forwarded IP', async () => {
-  resetCalls()
-  fetchMode = 'valid'
-  const response = await POST(
-    request(
-      {
-        prompt: 'Make a dashboard',
-        clarifications: [{ questionId: 'q_type', answer: 'Customer support' }],
-      },
-      'not-an-ip, 203.0.113.7, 10.0.0.1',
-    ),
-  )
-
-  assert.equal(response.status, 200)
-  assert.match(lastLimitCommand[3], /:ip:203\.0\.113\.7:/)
-  assert.equal(lastLimitCommand[6], 10)
-  assert.equal(lastLimitCommand[8], 3_600_000)
-})
-
-test('uses shared fallback when forwarded IP is unavailable', async () => {
-  resetCalls()
-  fetchMode = 'valid'
-  const response = await POST(
-    request({
-      prompt: 'Make a dashboard',
-      clarifications: [{ questionId: 'q_type', answer: 'Customer support' }],
-    }),
-  )
-
-  assert.equal(response.status, 200)
-  assert.match(lastLimitCommand[3], /:ip:unknown:/)
-})
-
-test('returns rate_limited without calling Groq', async () => {
-  resetCalls()
-  limitMode = 'deny'
-  const response = await POST(request({ prompt: 'Write a haiku', clarifications: [] }))
-
-  assert.equal(response.status, 429)
-  assert.deepEqual(await response.json(), { error: 'rate_limited' })
-  assert.equal(groqCalls, 0)
-})
-
-test('hides Upstash failures and fails closed', async () => {
-  resetCalls()
-  limitMode = 'error'
-  const response = await POST(request({ prompt: 'Write a haiku', clarifications: [] }))
-
-  assert.equal(response.status, 502)
-  assert.deepEqual(await response.json(), { error: 'upstream_error' })
-  assert.equal(groqCalls, 0)
 })

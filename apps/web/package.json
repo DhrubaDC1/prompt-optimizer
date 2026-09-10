@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@prompt-optimizer/optimizer": "workspace:*",
-    "@upstash/ratelimit": "2.0.8",
-    "@upstash/redis": "1.38.4",
     "framer-motion": "13.2.0",
     "next": "16.3.4",
     "openai": "7.10.0",
