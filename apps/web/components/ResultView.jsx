@@ -54,7 +54,7 @@ export default function ResultView({ value, onChange, onStartOver, onResubmit })
       />
 
       <div className="result-footer">
-        <p className="copy-status" aria-live="polite">
+        <p className="copy-status" role="status" aria-live="polite" aria-atomic="true">
           {copyStatus}
         </p>
         <div className="result-actions">

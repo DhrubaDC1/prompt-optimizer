@@ -33,7 +33,6 @@ export default function ClarificationForm({ questions, answers, index, dispatch,
     <section
       ref={container}
       className="clarification-screen"
-      aria-live="polite"
       tabIndex={-1}
     >
       <div className="progress-copy">

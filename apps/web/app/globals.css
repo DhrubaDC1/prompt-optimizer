@@ -88,7 +88,7 @@ h1 {
 
 .motion-measure {
   min-width: 0;
-  padding: 4px;
+  padding: 6px;
 }
 
 .brand {
@@ -225,7 +225,7 @@ h1 {
 }
 
 .shortcut {
-  color: var(--micro);
+  color: var(--secondary);
   font-size: 0.75rem;
   font-weight: 500;
 }

@@ -136,6 +136,11 @@ export default function HomePage() {
   return (
     <main className="app-shell">
       <div className="brand">Prompt sharpener</div>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {state.phase === PHASE.CLARIFY && state.questions[state.index]
+          ? `Question ${state.index + 1} of ${state.questions.length}: ${state.questions[state.index].question}`
+          : ''}
+      </p>
 
       <AnimatedContent
         phase={state.phase}
