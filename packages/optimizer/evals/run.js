@@ -1,12 +1,12 @@
 import { optimize } from '../src/optimize.js'
 import { cases } from './cases.js'
 
-if (!process.env.GROQ_API_KEY) {
-  console.error('Missing GROQ_API_KEY. Add it to the repo root .env file.')
+if (!process.env.GOOGLE_API_KEY) {
+  console.error('Missing GOOGLE_API_KEY. Add it to the repo root .env file.')
   process.exit(1)
 }
 
-console.log(`Model: ${process.env.GROQ_MODEL || 'openai/gpt-oss-20b'}\n`)
+console.log(`Model: ${process.env.GOOGLE_MODEL || 'gemini-flash-lite-latest'}\n`)
 
 let failed = 0
 

@@ -7,16 +7,16 @@ JavaScript-only pnpm workspace for the Prompt Optimizer product.
 - `packages/optimizer` — pure JavaScript optimizer package; no React or Next.js.
 - `apps/web` — Next.js app and API routes.
 
-## Groq
+## Gemini
 
-The optimizer uses Groq structured outputs. Copy `.env.example` to `.env` and set:
+The optimizer uses Google AI Studio (Gemini) structured outputs via its OpenAI-compatible endpoint. Copy `.env.example` to `.env` and set:
 
 ```bash
-GROQ_API_KEY=your_key_here
-GROQ_MODEL=openai/gpt-oss-20b
+GOOGLE_API_KEY=your_key_here
+GOOGLE_MODEL=gemini-flash-lite-latest
 ```
 
-`GROQ_MODEL` is optional; `openai/gpt-oss-20b` is the default.
+`GOOGLE_MODEL` is optional; `gemini-flash-lite-latest` is the default.
 
 ## Commands
 

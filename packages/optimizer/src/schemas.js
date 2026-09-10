@@ -160,7 +160,7 @@ export const finalModelResponseSchema = z
   })
   .strict()
 
-// Keep the provider-facing schema intentionally simple. Groq strict mode enforces
+// Keep the provider-facing schema intentionally simple. Gemini strict mode enforces
 // shape; the richer Zod schemas below enforce semantic rules after parsing.
 const openModelWireSchema = z.object({
   status: z.enum(['needs_clarification', 'ready']),

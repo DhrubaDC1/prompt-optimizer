@@ -157,9 +157,9 @@ importers:
 
   packages/optimizer:
     dependencies:
-      groq-sdk:
-        specifier: 1.6.0
-        version: 1.6.0
+      openai:
+        specifier: 7.10.0
+        version: 7.10.0(zod@4.5.4)
       zod:
         specifier: 4.5.4
         version: 4.5.4
@@ -414,10 +414,6 @@ packages:
         optional: true
       react-dom:
         optional: true
-
-  groq-sdk@1.6.0:
-    resolution: {integrity: sha512-ggMgo6n84aZdNObgkSbSxWrdAq4wABsViIRb5e4N15bMUtDLZVhqlgZOI7X4TeqdBMdaVUOuUdZxAZIp06u0vw==}
-    hasBin: true
 
   motion-dom@13.2.0:
     resolution: {integrity: sha512-N6gdSoWRDk0Rh/fVtlqUtLs+fEN3ELFZI3cn3IQE9Mnf3E+Mh8wjO6MstzCOPFh4Yf0L1as5m2eUyYWj8ylVSQ==}
@@ -701,8 +697,6 @@ snapshots:
     optionalDependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-
-  groq-sdk@1.6.0: {}
 
   motion-dom@13.2.0:
     dependencies:

@@ -1,4 +1,4 @@
-import Groq from 'groq-sdk'
+import OpenAI from 'openai'
 import { z } from 'zod'
 
 import {
@@ -14,12 +14,13 @@ import {
   buildRetrySystemPrompt,
 } from './prompts.js'
 
-const DEFAULT_MODEL = 'openai/gpt-oss-20b'
+const DEFAULT_MODEL = 'gemini-flash-lite-latest'
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
 const MAX_COMPLETION_TOKENS = 3_000
 const REQUEST_TIMEOUT_MS = 25_000
 const VALIDATION_ATTEMPTS = 2
 
-let groqClient
+let geminiClient
 
 export class OptimizerError extends Error {
   constructor(code, message, options) {
@@ -29,28 +30,22 @@ export class OptimizerError extends Error {
   }
 }
 
-function getGroqClient() {
-  if (groqClient) return groqClient
+function getGeminiClient() {
+  if (geminiClient) return geminiClient
 
-  const apiKey = process.env.GROQ_API_KEY
-
-  console.log('groq_env', {
-    hasApiKey: Boolean(apiKey),
-    apiKeyLength: apiKey?.length ?? 0,
-    apiKeyPrefix: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
-    model: process.env.GROQ_MODEL || DEFAULT_MODEL,
-  })
+  const apiKey = process.env.GOOGLE_API_KEY
 
   if (!apiKey) {
-    throw new OptimizerError('upstream_error', 'GROQ_API_KEY is not configured')
+    throw new OptimizerError('upstream_error', 'GOOGLE_API_KEY is not configured')
   }
 
-  groqClient = new Groq({
+  geminiClient = new OpenAI({
     apiKey,
+    baseURL: GEMINI_BASE_URL,
     maxRetries: 0,
   })
 
-  return groqClient
+  return geminiClient
 }
 
 function buildUserMessage(prompt, clarifications) {
@@ -75,7 +70,7 @@ function getResponseFormat(isFinal) {
 
 function parseAssistantContent(content, isFinal) {
   if (!content) {
-    throw new OptimizerError('invalid_response', 'Groq returned an empty response')
+    throw new OptimizerError('invalid_response', 'Gemini returned an empty response')
   }
 
   let value
@@ -83,7 +78,7 @@ function parseAssistantContent(content, isFinal) {
   try {
     value = JSON.parse(content)
   } catch (error) {
-    throw new OptimizerError('invalid_response', 'Groq returned invalid JSON', {
+    throw new OptimizerError('invalid_response', 'Gemini returned invalid JSON', {
       cause: error,
     })
   }
@@ -94,7 +89,7 @@ function parseAssistantContent(content, isFinal) {
     if (error instanceof z.ZodError) {
       throw new OptimizerError(
         'validation_error',
-        'Groq returned an invalid optimizer response',
+        'Gemini returned an invalid optimizer response',
         { cause: error },
       )
     }
@@ -103,41 +98,38 @@ function parseAssistantContent(content, isFinal) {
   }
 }
 
-function mapGroqError(error) {
+function mapGeminiError(error) {
   if (error instanceof OptimizerError) return error
 
-  if (error instanceof Groq.RateLimitError || error?.status === 429) {
-    console.error('groq_429', {
+  if (error instanceof OpenAI.RateLimitError || error?.status === 429) {
+    console.error('gemini_429', {
       message: error?.message,
       body: error?.error,
-      limit: error?.headers?.get?.('x-ratelimit-limit-tokens'),
-      remaining: error?.headers?.get?.('x-ratelimit-remaining-tokens'),
-      reset: error?.headers?.get?.('x-ratelimit-reset-tokens'),
     })
 
-    return new OptimizerError('rate_limited', 'Groq rate limit exceeded', {
+    return new OptimizerError('rate_limited', 'Gemini rate limit exceeded', {
       cause: error,
     })
   }
 
   if (
-    error instanceof Groq.APIUserAbortError ||
-    error instanceof Groq.APIConnectionTimeoutError ||
+    error instanceof OpenAI.APIUserAbortError ||
+    error instanceof OpenAI.APIConnectionTimeoutError ||
     error?.name === 'AbortError' ||
     error?.code === 'ABORT_ERR'
   ) {
-    return new OptimizerError('upstream_timeout', 'Groq request timed out', {
+    return new OptimizerError('upstream_timeout', 'Gemini request timed out', {
       cause: error,
     })
   }
 
-  return new OptimizerError('upstream_error', 'Groq request failed', {
+  return new OptimizerError('upstream_error', 'Gemini request failed', {
     cause: error,
   })
 }
 
 async function requestCompletion({ prompt, clarifications, isFinal, retryIssues }) {
-  const client = getGroqClient()
+  const client = getGeminiClient()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
@@ -163,12 +155,11 @@ async function requestCompletion({ prompt, clarifications, isFinal, retryIssues 
 
     const completion = await client.chat.completions.create(
       {
-        model: process.env.GROQ_MODEL || DEFAULT_MODEL,
+        model: process.env.GOOGLE_MODEL || DEFAULT_MODEL,
         messages,
         response_format: getResponseFormat(isFinal),
         temperature: retryIssues ? 0.5 : 0.1,
         max_completion_tokens: MAX_COMPLETION_TOKENS,
-        include_reasoning: false,
         stream: false,
       },
       {
@@ -180,7 +171,7 @@ async function requestCompletion({ prompt, clarifications, isFinal, retryIssues 
 
     return completion.choices[0]?.message?.content ?? null
   } catch (error) {
-    throw mapGroqError(error)
+    throw mapGeminiError(error)
   } finally {
     clearTimeout(timeout)
   }
@@ -212,12 +203,12 @@ export async function optimize(prompt, clarifications = []) {
   }
 
   if (lastError?.code === 'validation_error') {
-    throw new OptimizerError('invalid_response', 'Groq returned an invalid response', {
+    throw new OptimizerError('invalid_response', 'Gemini returned an invalid response', {
       cause: lastError,
     })
   }
 
-  throw lastError ?? new OptimizerError('invalid_response', 'Groq returned an invalid response')
+  throw lastError ?? new OptimizerError('invalid_response', 'Gemini returned an invalid response')
 }
 
 export default optimize

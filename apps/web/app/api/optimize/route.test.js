@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-process.env.GROQ_API_KEY = 'test-key'
+process.env.GOOGLE_API_KEY = 'test-key'
 
 let fetchMode = 'valid'
-let groqCalls = 0
+let geminiCalls = 0
 const originalFetch = globalThis.fetch
 
 globalThis.fetch = async (url, init) => {
-  groqCalls += 1
+  geminiCalls += 1
 
   if (fetchMode === 'rate_limited') {
     return Response.json(
@@ -30,7 +30,7 @@ globalThis.fetch = async (url, init) => {
     id: 'test',
     object: 'chat.completion',
     created: 0,
-    model: 'openai/gpt-oss-20b',
+    model: 'gemini-flash-lite-latest',
     choices: [
       {
         index: 0,
@@ -69,25 +69,25 @@ test.after(() => {
 })
 
 function resetCalls() {
-  groqCalls = 0
+  geminiCalls = 0
 }
 
-test('rejects invalid prompt before Groq', async () => {
+test('rejects invalid prompt before Gemini', async () => {
   resetCalls()
   const response = await POST(request({ prompt: '', clarifications: [] }))
 
   assert.equal(response.status, 400)
   assert.deepEqual(await response.json(), { error: 'invalid_response' })
-  assert.equal(groqCalls, 0)
+  assert.equal(geminiCalls, 0)
 })
 
-test('rejects oversized prompt before Groq', async () => {
+test('rejects oversized prompt before Gemini', async () => {
   resetCalls()
   const response = await POST(request({ prompt: 'x'.repeat(8_001), clarifications: [] }))
 
   assert.equal(response.status, 413)
   assert.deepEqual(await response.json(), { error: 'too_long' })
-  assert.equal(groqCalls, 0)
+  assert.equal(geminiCalls, 0)
 })
 
 test('rejects oversized serialized body before parsing', async () => {
@@ -96,10 +96,10 @@ test('rejects oversized serialized body before parsing', async () => {
 
   assert.equal(response.status, 413)
   assert.deepEqual(await response.json(), { error: 'too_long' })
-  assert.equal(groqCalls, 0)
+  assert.equal(geminiCalls, 0)
 })
 
-test('rejects too many clarifications before Groq', async () => {
+test('rejects too many clarifications before Gemini', async () => {
   resetCalls()
   const clarifications = Array.from({ length: 9 }, (_, index) => ({
     questionId: `q_${index}`,
@@ -109,10 +109,10 @@ test('rejects too many clarifications before Groq', async () => {
 
   assert.equal(response.status, 413)
   assert.deepEqual(await response.json(), { error: 'too_long' })
-  assert.equal(groqCalls, 0)
+  assert.equal(geminiCalls, 0)
 })
 
-test('rejects malformed and oversized answers before Groq', async () => {
+test('rejects malformed and oversized answers before Gemini', async () => {
   resetCalls()
 
   for (const [answer, status, error] of [
@@ -131,7 +131,7 @@ test('rejects malformed and oversized answers before Groq', async () => {
     assert.deepEqual(await response.json(), { error })
   }
 
-  assert.equal(groqCalls, 0)
+  assert.equal(geminiCalls, 0)
 })
 
 test('returns ready response for valid final-round request', async () => {
@@ -150,7 +150,7 @@ test('returns ready response for valid final-round request', async () => {
     status: 'ready',
     optimizedPrompt: 'Create a customer-support dashboard.',
   })
-  assert.equal(groqCalls, 1)
+  assert.equal(geminiCalls, 1)
 })
 
 test('derives round without trusting client fields', async () => {
@@ -165,7 +165,7 @@ test('derives round without trusting client fields', async () => {
     status: 'ready',
     optimizedPrompt: 'Write a haiku about rain',
   })
-  assert.equal(groqCalls, 1)
+  assert.equal(geminiCalls, 1)
 })
 
 test('maps optimizer failures without provider details', async () => {
@@ -175,5 +175,5 @@ test('maps optimizer failures without provider details', async () => {
 
   assert.equal(response.status, 429)
   assert.deepEqual(await response.json(), { error: 'rate_limited' })
-  assert.equal(groqCalls, 1)
+  assert.equal(geminiCalls, 1)
 })

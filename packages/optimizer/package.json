@@ -12,7 +12,7 @@
     "eval": "node --env-file-if-exists=../../.env evals/run.js"
   },
   "dependencies": {
-    "groq-sdk": "1.6.0",
+    "openai": "7.10.0",
     "zod": "4.5.4"
   }
 }
