@@ -32,12 +32,21 @@ export class OptimizerError extends Error {
 function getGroqClient() {
   if (groqClient) return groqClient
 
-  if (!process.env.GROQ_API_KEY) {
+  const apiKey = process.env.GROQ_API_KEY
+
+  console.log('groq_env', {
+    hasApiKey: Boolean(apiKey),
+    apiKeyLength: apiKey?.length ?? 0,
+    apiKeyPrefix: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
+    model: process.env.GROQ_MODEL || DEFAULT_MODEL,
+  })
+
+  if (!apiKey) {
     throw new OptimizerError('upstream_error', 'GROQ_API_KEY is not configured')
   }
 
   groqClient = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey,
     maxRetries: 0,
   })
 
