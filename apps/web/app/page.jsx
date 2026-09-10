@@ -1,12 +1,13 @@
 'use client'
 
-import { useReducer } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 
 import ClarificationForm from '../components/ClarificationForm.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
 import PromptInput from '../components/PromptInput.jsx'
 import ResultView from '../components/ResultView.jsx'
 import Spinner from '../components/Spinner.jsx'
+import { watchClarificationAbandonment } from './clarification-abandonment.js'
 import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
 
 const ERROR_MESSAGES = {
@@ -19,6 +20,14 @@ const ERROR_MESSAGES = {
 
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const status = useRef({ phase: state.phase, reachedResult: false })
+  status.current.phase = state.phase
+  status.current.reachedResult ||= state.phase === PHASE.RESULT
+
+  useEffect(
+    () => watchClarificationAbandonment(() => status.current, document, navigator),
+    [],
+  )
 
   async function runOptimize(request, replaceOriginal = false) {
     dispatch({ type: 'START', request, replaceOriginal })
