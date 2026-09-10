@@ -56,7 +56,7 @@ export default function ClarificationForm({ questions, answers, index, dispatch,
             onClick={() => dispatch({ type: 'BACK' })}
             disabled={index === 0}
           >
-            Back
+            Go back
           </button>
           {canOptimizeAnyway && (
             <button className="text-button" type="button" onClick={optimizeAnyway}>
@@ -64,7 +64,7 @@ export default function ClarificationForm({ questions, answers, index, dispatch,
             </button>
           )}
           <button className="primary-button" type="submit" disabled={!complete}>
-            {last ? 'Optimize' : 'Next'}
+            {last ? 'Optimize' : 'Continue'}
           </button>
         </div>
       </form>
