@@ -11,7 +11,7 @@ import {
 import {
   FINAL_SYSTEM_PROMPT,
   OPEN_SYSTEM_PROMPT,
-  RETRY_SYSTEM_PROMPT,
+  buildRetrySystemPrompt,
 } from './prompts.js'
 
 const DEFAULT_MODEL = 'openai/gpt-oss-20b'
@@ -119,7 +119,7 @@ function mapGroqError(error) {
   })
 }
 
-async function requestCompletion({ prompt, clarifications, isFinal, retry }) {
+async function requestCompletion({ prompt, clarifications, isFinal, retryIssues }) {
   const client = getGroqClient()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
@@ -132,10 +132,10 @@ async function requestCompletion({ prompt, clarifications, isFinal, retry }) {
       },
     ]
 
-    if (retry) {
+    if (retryIssues) {
       messages.push({
         role: 'system',
-        content: RETRY_SYSTEM_PROMPT,
+        content: buildRetrySystemPrompt(retryIssues),
       })
     }
 
@@ -149,7 +149,7 @@ async function requestCompletion({ prompt, clarifications, isFinal, retry }) {
         model: process.env.GROQ_MODEL || DEFAULT_MODEL,
         messages,
         response_format: getResponseFormat(isFinal),
-        temperature: 0.1,
+        temperature: retryIssues ? 0.5 : 0.1,
         max_completion_tokens: MAX_COMPLETION_TOKENS,
         include_reasoning: false,
         stream: false,
@@ -180,7 +180,7 @@ export async function optimize(prompt, clarifications = []) {
       prompt: request.prompt,
       clarifications: request.clarifications,
       isFinal,
-      retry: attempt > 0,
+      retryIssues: lastError?.cause instanceof z.ZodError ? lastError.cause.issues : undefined,
     })
 
     try {

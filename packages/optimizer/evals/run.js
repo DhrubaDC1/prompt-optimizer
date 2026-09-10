@@ -10,10 +10,10 @@ console.log(`Model: ${process.env.GROQ_MODEL || 'openai/gpt-oss-20b'}\n`)
 
 let failed = 0
 
-for (const [input, expectedStatus] of cases) {
+for (const [input, expectedStatus, check] of cases) {
   try {
     const result = await optimize(input)
-    const passed = result.status === expectedStatus
+    const passed = result.status === expectedStatus && (!check || check(result))
     if (!passed) failed += 1
 
     console.log(passed ? '✓' : '✗', input.slice(0, 40))
