@@ -474,6 +474,129 @@ h1 {
   font-weight: 500;
 }
 
+.recent-list {
+  margin-top: 24px;
+}
+
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.recent-title {
+  color: var(--micro);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recent-clear {
+  padding: 0;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.recent-clear:hover {
+  color: var(--text);
+}
+
+.recent-clear:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.recent-list ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.recent-row-select {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+.recent-row-select:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+}
+
+.recent-row-select:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.recent-row-label {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-row-time {
+  flex: none;
+  color: var(--micro);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-row-remove {
+  flex: none;
+  width: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.recent-row-remove:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.recent-row-remove:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.recent-note {
+  margin: 10px 0 0;
+  color: var(--micro);
+  font-size: 0.75rem;
+}
+
 .clarification-screen {
   outline: 0;
 }

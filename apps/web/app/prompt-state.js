@@ -90,6 +90,18 @@ export function reducer(state, action) {
       }
     case 'EDIT_RESULT':
       return { ...state, optimizedPrompt: action.optimizedPrompt }
+    case 'RESTORE':
+      return {
+        ...state,
+        phase: PHASE.RESULT,
+        prompt: action.entry.originalPrompt,
+        originalPrompt: action.entry.originalPrompt,
+        mode: action.entry.mode,
+        target: action.entry.target,
+        optimizedPrompt: action.entry.optimizedPrompt,
+        score: action.entry.score,
+        error: null,
+      }
     case 'START_OVER':
       return {
         ...INITIAL_STATE,

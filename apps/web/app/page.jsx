@@ -8,9 +8,17 @@ import ClarificationForm from '../components/ClarificationForm.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
 import ModeSelector from '../components/ModeSelector.jsx'
 import PromptInput from '../components/PromptInput.jsx'
+import RecentList from '../components/RecentList.jsx'
 import ResultView from '../components/ResultView.jsx'
 import Spinner from '../components/Spinner.jsx'
 import { watchClarificationAbandonment } from './clarification-abandonment.js'
+import {
+  addHistoryEntry,
+  clearHistory,
+  loadHistory,
+  makeHistoryId,
+  removeHistoryEntry,
+} from './history.js'
 import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
 
 const ERROR_MESSAGES = {
@@ -72,6 +80,7 @@ function AnimatedContent({ children, phase, questionIndex, direction }) {
 
 export default function HomePage() {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const [history, setHistory] = useState([])
   const direction = useRef(1)
   const status = useRef({ phase: state.phase, reachedResult: false })
   status.current.phase = state.phase
@@ -82,8 +91,14 @@ export default function HomePage() {
     [],
   )
 
+  useEffect(() => {
+    setHistory(loadHistory())
+  }, [])
+
   async function runOptimize(request, replaceOriginal = false) {
     direction.current = 1
+    const originalPromptForHistory =
+      replaceOriginal || !state.originalPrompt ? request.prompt : state.originalPrompt
     dispatch({ type: 'START', request, replaceOriginal })
 
     try {
@@ -110,6 +125,17 @@ export default function HomePage() {
 
       if (body?.status === 'ready' && typeof body.optimizedPrompt === 'string') {
         dispatch({ type: 'RESULT', optimizedPrompt: body.optimizedPrompt, score: body.score })
+        setHistory((previous) =>
+          addHistoryEntry(previous, {
+            id: makeHistoryId(),
+            originalPrompt: originalPromptForHistory,
+            optimizedPrompt: body.optimizedPrompt,
+            mode: request.mode,
+            target: request.target,
+            score: body.score ?? null,
+            createdAt: Date.now(),
+          }),
+        )
         return
       }
 
@@ -172,6 +198,15 @@ export default function HomePage() {
               value={state.prompt}
               onChange={(prompt) => dispatch({ type: 'EDIT', prompt })}
               onSubmit={submitPrompt}
+            />
+            <RecentList
+              entries={history}
+              onSelect={(entry) => {
+                direction.current = 1
+                dispatch({ type: 'RESTORE', entry })
+              }}
+              onRemove={(id) => setHistory((previous) => removeHistoryEntry(previous, id))}
+              onClear={() => setHistory(clearHistory())}
             />
           </section>
         )}
