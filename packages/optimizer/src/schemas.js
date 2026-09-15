@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
+import { GENERATION_MODES, TARGETS_BY_MODE } from './modes.js'
+
 export const MAX_REQUEST_BYTES = 20_000
+
+export const generationModeSchema = z.enum(GENERATION_MODES)
 
 export const questionTypeSchema = z.enum([
   'single_select',
@@ -22,12 +26,22 @@ export const optimizeRequestSchema = z
   .object({
     prompt: z.string().min(1).max(8_000),
     clarifications: z.array(clarificationSchema).max(8).default([]),
+    mode: generationModeSchema.default('chat'),
+    target: z.string().max(40).nullable().default(null),
   })
   .superRefine((value, ctx) => {
     if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_REQUEST_BYTES) {
       ctx.addIssue({
         code: 'custom',
         message: 'Request body is too large',
+      })
+    }
+
+    if (value.target && !TARGETS_BY_MODE[value.mode].includes(value.target)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['target'],
+        message: 'Target is not valid for this mode',
       })
     }
   })

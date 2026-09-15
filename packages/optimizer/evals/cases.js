@@ -13,4 +13,16 @@ export const cases = [
     'ready',
     (result) => !/^banana$/i.test(result.optimizedPrompt.trim()),
   ],
+  [
+    'cat in space',
+    'ready',
+    (result) => !/^(generate|create|draw|make)\b/i.test(result.optimizedPrompt.trim()),
+    { mode: 'image' },
+  ],
+  [
+    'make a bot that answers support emails',
+    'ready',
+    (result) => result.optimizedPrompt.length > 200,
+    { mode: 'agent' },
+  ],
 ]

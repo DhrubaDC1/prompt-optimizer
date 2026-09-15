@@ -64,7 +64,10 @@ export async function POST(request) {
   const isFinal = body.clarifications.length > 0
 
   try {
-    const result = await optimize(body.prompt, body.clarifications)
+    const result = await optimize(body.prompt, body.clarifications, {
+      mode: body.mode,
+      target: body.target,
+    })
 
     if (isFinal) {
       return Response.json({ status: 'ready', optimizedPrompt: result.optimizedPrompt })

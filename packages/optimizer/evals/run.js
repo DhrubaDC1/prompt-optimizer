@@ -10,9 +10,9 @@ console.log(`Model: ${process.env.GOOGLE_MODEL || 'gemini-flash-lite-latest'}\n`
 
 let failed = 0
 
-for (const [input, expectedStatus, check] of cases) {
+for (const [input, expectedStatus, check, options] of cases) {
   try {
-    const result = await optimize(input)
+    const result = await optimize(input, [], options)
     const passed = result.status === expectedStatus && (!check || check(result))
     if (!passed) failed += 1
 

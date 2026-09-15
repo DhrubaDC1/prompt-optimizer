@@ -9,8 +9,8 @@ import {
   parseOpenModelResponse,
 } from './schemas.js'
 import {
-  FINAL_SYSTEM_PROMPT,
-  OPEN_SYSTEM_PROMPT,
+  buildFinalSystemPrompt,
+  buildOpenSystemPrompt,
   buildRetrySystemPrompt,
 } from './prompts.js'
 
@@ -128,7 +128,7 @@ function mapGeminiError(error) {
   })
 }
 
-async function requestCompletion({ prompt, clarifications, isFinal, retryIssues }) {
+async function requestCompletion({ prompt, clarifications, mode, target, isFinal, retryIssues }) {
   const client = getGeminiClient()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
@@ -137,7 +137,9 @@ async function requestCompletion({ prompt, clarifications, isFinal, retryIssues 
     const messages = [
       {
         role: 'system',
-        content: isFinal ? FINAL_SYSTEM_PROMPT : OPEN_SYSTEM_PROMPT,
+        content: isFinal
+          ? buildFinalSystemPrompt(mode, target)
+          : buildOpenSystemPrompt(mode, target),
       },
     ]
 
@@ -177,8 +179,13 @@ async function requestCompletion({ prompt, clarifications, isFinal, retryIssues 
   }
 }
 
-export async function optimize(prompt, clarifications = []) {
-  const request = optimizeRequestSchema.parse({ prompt, clarifications })
+export async function optimize(prompt, clarifications = [], options = {}) {
+  const request = optimizeRequestSchema.parse({
+    prompt,
+    clarifications,
+    mode: options.mode,
+    target: options.target,
+  })
   const isFinal = request.clarifications.length > 0
 
   let lastError
@@ -187,6 +194,8 @@ export async function optimize(prompt, clarifications = []) {
     const content = await requestCompletion({
       prompt: request.prompt,
       clarifications: request.clarifications,
+      mode: request.mode,
+      target: request.target,
       isFinal,
       retryIssues: lastError?.cause instanceof z.ZodError ? lastError.cause.issues : undefined,
     })

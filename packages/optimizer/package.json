@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/optimize.js",
     "./schemas": "./src/schemas.js",
-    "./prompts": "./src/prompts.js"
+    "./prompts": "./src/prompts.js",
+    "./modes": "./src/modes.js"
   },
   "scripts": {
     "eval": "node --env-file-if-exists=../../.env evals/run.js"

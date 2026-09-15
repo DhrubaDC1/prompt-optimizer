@@ -6,6 +6,7 @@ import useMeasure from 'react-use-measure'
 
 import ClarificationForm from '../components/ClarificationForm.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx'
+import ModeSelector from '../components/ModeSelector.jsx'
 import PromptInput from '../components/PromptInput.jsx'
 import ResultView from '../components/ResultView.jsx'
 import Spinner from '../components/Spinner.jsx'
@@ -120,11 +121,19 @@ export default function HomePage() {
 
   function submitPrompt() {
     if (!state.prompt.trim() || state.prompt.length > 8_000) return
-    runOptimize({ prompt: state.prompt, clarifications: [] }, true)
+    runOptimize(
+      { prompt: state.prompt, clarifications: [], mode: state.mode, target: state.target },
+      true,
+    )
   }
 
   function submitClarifications(clarifications) {
-    runOptimize({ prompt: state.requestPrompt, clarifications })
+    runOptimize({
+      prompt: state.requestPrompt,
+      clarifications,
+      mode: state.mode,
+      target: state.target,
+    })
   }
 
   function updateClarification(action) {
@@ -153,6 +162,12 @@ export default function HomePage() {
             <p className="supporting-copy">
               Turn a rough idea into a clear prompt without changing what you mean.
             </p>
+            <ModeSelector
+              mode={state.mode}
+              target={state.target}
+              onModeChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
+              onTargetChange={(target) => dispatch({ type: 'SET_TARGET', target })}
+            />
             <PromptInput
               value={state.prompt}
               onChange={(prompt) => dispatch({ type: 'EDIT', prompt })}
@@ -182,7 +197,12 @@ export default function HomePage() {
               dispatch({ type: 'START_OVER' })
             }}
             onResubmit={() =>
-              runOptimize({ prompt: state.optimizedPrompt, clarifications: [] })
+              runOptimize({
+                prompt: state.optimizedPrompt,
+                clarifications: [],
+                mode: state.mode,
+                target: state.target,
+              })
             }
           />
         )}

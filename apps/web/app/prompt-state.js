@@ -10,6 +10,8 @@ export const INITIAL_STATE = {
   phase: PHASE.INPUT,
   prompt: '',
   originalPrompt: '',
+  mode: 'chat',
+  target: null,
   questions: [],
   answers: {},
   index: 0,
@@ -45,6 +47,10 @@ export function reducer(state, action) {
   switch (action.type) {
     case 'EDIT':
       return { ...state, prompt: action.prompt }
+    case 'SET_MODE':
+      return { ...state, mode: action.mode, target: null }
+    case 'SET_TARGET':
+      return { ...state, target: action.target }
     case 'START':
       return {
         ...state,
@@ -87,6 +93,8 @@ export function reducer(state, action) {
         ...INITIAL_STATE,
         prompt: state.originalPrompt,
         originalPrompt: state.originalPrompt,
+        mode: state.mode,
+        target: state.target,
       }
     case 'FAIL':
       return { ...state, phase: PHASE.ERROR, error: action.error }
