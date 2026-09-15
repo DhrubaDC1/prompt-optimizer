@@ -16,7 +16,7 @@ import {
 
 const DEFAULT_MODEL = 'gemini-flash-lite-latest'
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/'
-const MAX_COMPLETION_TOKENS = 3_000
+const MAX_COMPLETION_TOKENS = 4_000
 const REQUEST_TIMEOUT_MS = 25_000
 const VALIDATION_ATTEMPTS = 2
 

@@ -1,6 +1,11 @@
 export const cases = [
   ['Make a dashboard', 'needs_clarification'],
-  ['Write a haiku about rain', 'ready'],
+  [
+    'Write a haiku about rain',
+    'ready',
+    (result) => result.score.after.subscores.map((s) => s.label).join(',') ===
+      'Clarity,Specificity,Constraints',
+  ],
   [
     'fix this\n\nfunction add(a,b){return a-b}',
     'ready',

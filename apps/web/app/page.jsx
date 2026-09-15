@@ -109,7 +109,7 @@ export default function HomePage() {
       }
 
       if (body?.status === 'ready' && typeof body.optimizedPrompt === 'string') {
-        dispatch({ type: 'RESULT', optimizedPrompt: body.optimizedPrompt })
+        dispatch({ type: 'RESULT', optimizedPrompt: body.optimizedPrompt, score: body.score })
         return
       }
 
@@ -191,6 +191,7 @@ export default function HomePage() {
         {state.phase === PHASE.RESULT && (
           <ResultView
             value={state.optimizedPrompt}
+            score={state.score}
             onChange={(optimizedPrompt) => dispatch({ type: 'EDIT_RESULT', optimizedPrompt })}
             onStartOver={() => {
               direction.current = 1

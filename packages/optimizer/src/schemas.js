@@ -46,6 +46,21 @@ export const optimizeRequestSchema = z
     }
   })
 
+export const subscoreSchema = z.object({
+  label: z.string().min(1).max(40),
+  value: z.number().int().min(0).max(100),
+})
+
+export const scoreSideSchema = z.object({
+  overall: z.number().int().min(0).max(100),
+  subscores: z.array(subscoreSchema).length(3),
+})
+
+export const scoreSchema = z.object({
+  before: scoreSideSchema,
+  after: scoreSideSchema,
+})
+
 export const questionSchema = z
   .object({
     id: z.string().min(1),
@@ -107,6 +122,7 @@ export const openModelResponseSchema = z
     status: z.enum(['needs_clarification', 'ready']),
     questions: z.array(questionSchema).min(1).max(5).nullable(),
     optimizedPrompt: z.string().min(1).nullable(),
+    score: scoreSchema.nullable(),
   })
   .superRefine((value, ctx) => {
     if (value.status === 'needs_clarification') {
@@ -123,6 +139,14 @@ export const openModelResponseSchema = z
           code: 'custom',
           path: ['optimizedPrompt'],
           message: 'optimizedPrompt must be null while asking questions',
+        })
+      }
+
+      if (value.score !== null) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['score'],
+          message: 'score must be null while asking questions',
         })
       }
 
@@ -165,17 +189,37 @@ export const openModelResponseSchema = z
           message: 'questions must be null when the prompt is ready',
         })
       }
+
+      if (!value.score) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['score'],
+          message: 'Score is required when the prompt is ready',
+        })
+      }
     }
   })
 
 export const finalModelResponseSchema = z
   .object({
     optimizedPrompt: z.string().min(1),
+    score: scoreSchema,
   })
   .strict()
 
 // Keep the provider-facing schema intentionally simple. Gemini strict mode enforces
 // shape; the richer Zod schemas below enforce semantic rules after parsing.
+const scoreWireSchema = z.object({
+  before: z.object({
+    overall: z.number(),
+    subscores: z.array(z.object({ label: z.string(), value: z.number() })),
+  }),
+  after: z.object({
+    overall: z.number(),
+    subscores: z.array(z.object({ label: z.string(), value: z.number() })),
+  }),
+})
+
 const openModelWireSchema = z.object({
   status: z.enum(['needs_clarification', 'ready']),
   questions: z
@@ -190,10 +234,12 @@ const openModelWireSchema = z.object({
     )
     .nullable(),
   optimizedPrompt: z.string().nullable(),
+  score: scoreWireSchema.nullable(),
 })
 
 const finalModelWireSchema = z.object({
   optimizedPrompt: z.string(),
+  score: scoreWireSchema,
 })
 
 export const openModelJsonSchema = z.toJSONSchema(openModelWireSchema)
@@ -229,6 +275,7 @@ export function parseOpenModelResponse(value) {
   return {
     status: 'ready',
     optimizedPrompt: parsed.optimizedPrompt,
+    score: parsed.score,
   }
 }
 

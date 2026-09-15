@@ -44,6 +44,22 @@ const MODE_RULES = {
   agent: AGENT_MODE_RULES,
 }
 
+const SCORE_LABELS = {
+  chat: ['Clarity', 'Specificity', 'Constraints'],
+  image: ['Subject', 'Style', 'Composition'],
+  agent: ['Role', 'Tools', 'Stop conditions'],
+}
+
+function scoreRules(mode) {
+  const labels = SCORE_LABELS[mode] ?? SCORE_LABELS.chat
+
+  return `Scoring (only when status is "ready"):
+- Score the original user prompt ("before") and your optimizedPrompt ("after") independently, each on the same rules above, not against each other.
+- Each side gets an overall 0-100 score and exactly these three subscores, in this order: ${labels.join(', ')}, each 0-100.
+- overall is your holistic judgment, not an average of the subscores.
+- Score honestly: a vague or unconstrained original prompt should score low. Do not inflate "before" to make the improvement look bigger, and do not give "after" a perfect score unless it genuinely has no room left to improve.`
+}
+
 const QUESTION_RULES = `Clarifying questions:
 - Missing information is material only if two plausible answers would produce meaningfully different optimized prompts. Ask only about material gaps; if every plausible answer leads to roughly the same prompt, or the answer can be safely inferred, don't ask. That more detail could exist is never a reason on its own.
 - Ask 1 to 5 questions. Prefer constrained types; ask at most one text or textarea question.
@@ -70,15 +86,19 @@ export function buildOpenSystemPrompt(mode, target) {
 
 ${QUESTION_RULES}
 
+${scoreRules(mode)}
+
 This is the first round. Choose exactly one path:
-- Nothing material is missing: status "ready", questions null, optimizedPrompt set.
-- Something material is missing: status "needs_clarification", questions set, optimizedPrompt null.`
+- Nothing material is missing: status "ready", questions null, optimizedPrompt set, score set.
+- Something material is missing: status "needs_clarification", questions set, optimizedPrompt null, score null.`
 }
 
 export function buildFinalSystemPrompt(mode, target) {
   return `${coreRules(mode, target)}
 
-This is the final round. The user has had their one chance to clarify, so you cannot ask questions: return status "ready", questions null, and optimizedPrompt. Use every clarification answer provided. A blank answer means the user skipped that question; treat it as unknown, not as "none". Where information is still missing, keep the prompt general rather than guessing.`
+${scoreRules(mode)}
+
+This is the final round. The user has had their one chance to clarify, so you cannot ask questions: return status "ready", questions null, optimizedPrompt, and score. Use every clarification answer provided. A blank answer means the user skipped that question; treat it as unknown, not as "none". Where information is still missing, keep the prompt general rather than guessing.`
 }
 
 export function buildRetrySystemPrompt(issues) {
