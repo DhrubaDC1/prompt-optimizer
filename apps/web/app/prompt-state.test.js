@@ -77,3 +77,21 @@ test('edits result and starts over with original rough prompt', () => {
   assert.equal(restarted.prompt, roughPrompt)
   assert.equal(restarted.originalPrompt, roughPrompt)
 })
+
+test('restores a history entry directly into the result phase', () => {
+  const entry = {
+    originalPrompt: 'make a dashboard',
+    optimizedPrompt: 'Build a customer-support dashboard.',
+    mode: 'chat',
+    target: 'claude',
+    score: { before: { overall: 40, subscores: [] }, after: { overall: 90, subscores: [] } },
+  }
+  const restored = reducer(INITIAL_STATE, { type: 'RESTORE', entry })
+
+  assert.equal(restored.phase, PHASE.RESULT)
+  assert.equal(restored.optimizedPrompt, entry.optimizedPrompt)
+  assert.equal(restored.originalPrompt, entry.originalPrompt)
+  assert.equal(restored.mode, entry.mode)
+  assert.equal(restored.target, entry.target)
+  assert.deepEqual(restored.score, entry.score)
+})
