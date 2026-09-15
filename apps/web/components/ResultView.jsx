@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 
 import { copyText } from './copy-text.js'
+import ScoreDelta from './ScoreDelta.jsx'
 
 function logCopy() {
   fetch('/api/log', {
@@ -10,7 +11,7 @@ function logCopy() {
   }).catch(() => {})
 }
 
-export default function ResultView({ value, onChange, onStartOver, onResubmit }) {
+export default function ResultView({ value, score, onChange, onStartOver, onResubmit }) {
   const textarea = useRef(null)
   const [copyStatus, setCopyStatus] = useState('')
   const canResubmit = value.trim().length > 0 && value.length <= 8_000
@@ -35,7 +36,10 @@ export default function ResultView({ value, onChange, onStartOver, onResubmit })
 
   return (
     <section className="result-screen" aria-labelledby="result-title">
-      <h1 id="result-title">Your prompt is ready</h1>
+      <div className="result-header">
+        <h1 id="result-title">Your prompt is ready</h1>
+        <ScoreDelta score={score} />
+      </div>
       <label className="result-label" htmlFor="optimized-prompt">
         Editable prompt
         <span>Change anything before copying or optimizing again.</span>

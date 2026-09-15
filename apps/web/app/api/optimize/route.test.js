@@ -17,14 +17,20 @@ globalThis.fetch = async (url, init) => {
     )
   }
 
+  const score = {
+    before: { overall: 40, subscores: [{ label: 'Clarity', value: 40 }, { label: 'Specificity', value: 35 }, { label: 'Constraints', value: 45 }] },
+    after: { overall: 90, subscores: [{ label: 'Clarity', value: 92 }, { label: 'Specificity', value: 88 }, { label: 'Constraints', value: 90 }] },
+  }
+
   const content =
     fetchMode === 'open'
       ? {
           status: 'ready',
           questions: null,
           optimizedPrompt: 'Write a haiku about rain',
+          score,
         }
-      : { optimizedPrompt: 'Create a customer-support dashboard.' }
+      : { optimizedPrompt: 'Create a customer-support dashboard.', score }
 
   return Response.json({
     id: 'test',
@@ -146,10 +152,11 @@ test('returns ready response for valid final-round request', async () => {
   )
 
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), {
-    status: 'ready',
-    optimizedPrompt: 'Create a customer-support dashboard.',
-  })
+  const body = await response.json()
+  assert.equal(body.status, 'ready')
+  assert.equal(body.optimizedPrompt, 'Create a customer-support dashboard.')
+  assert.equal(body.score.before.overall, 40)
+  assert.equal(body.score.after.overall, 90)
   assert.equal(geminiCalls, 1)
 })
 
@@ -161,10 +168,11 @@ test('derives round without trusting client fields', async () => {
   )
 
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), {
-    status: 'ready',
-    optimizedPrompt: 'Write a haiku about rain',
-  })
+  const body = await response.json()
+  assert.equal(body.status, 'ready')
+  assert.equal(body.optimizedPrompt, 'Write a haiku about rain')
+  assert.equal(body.score.before.overall, 40)
+  assert.equal(body.score.after.overall, 90)
   assert.equal(geminiCalls, 1)
 })
 

@@ -19,8 +19,11 @@ for (const [input, expectedStatus, check, options] of cases) {
     console.log(passed ? '✓' : '✗', input.slice(0, 40))
     console.log(
       result.optimizedPrompt ?? result.questions.map((question) => question.question).join(' | '),
-      '\n',
     )
+    if (result.score) {
+      console.log(`score: ${result.score.before.overall} -> ${result.score.after.overall}`)
+    }
+    console.log()
   } catch (error) {
     failed += 1
     console.log('✗', input.slice(0, 40))

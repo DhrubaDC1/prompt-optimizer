@@ -70,7 +70,11 @@ export async function POST(request) {
     })
 
     if (isFinal) {
-      return Response.json({ status: 'ready', optimizedPrompt: result.optimizedPrompt })
+      return Response.json({
+        status: 'ready',
+        optimizedPrompt: result.optimizedPrompt,
+        score: result.score,
+      })
     }
 
     return Response.json(result)

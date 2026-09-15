@@ -17,6 +17,7 @@ export const INITIAL_STATE = {
   index: 0,
   requestPrompt: '',
   optimizedPrompt: '',
+  score: null,
   error: null,
   retryRequest: null,
 }
@@ -85,6 +86,7 @@ export function reducer(state, action) {
         ...state,
         phase: PHASE.RESULT,
         optimizedPrompt: action.optimizedPrompt,
+        score: action.score ?? null,
       }
     case 'EDIT_RESULT':
       return { ...state, optimizedPrompt: action.optimizedPrompt }
