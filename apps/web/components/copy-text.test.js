@@ -53,3 +53,7 @@ test('leaves text selected when both copy methods fail', async () => {
   assert.equal(await copyText('Ready prompt', field, null, () => false), false)
   assert.equal(field.selected, true)
 })
+
+test('reports failure without a field to select when the Clipboard API fails', async () => {
+  assert.equal(await copyText('Link', null, undefined, () => true), false)
+})

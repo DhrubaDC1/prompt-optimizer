@@ -28,6 +28,7 @@ export const optimizeRequestSchema = z
     clarifications: z.array(clarificationSchema).max(8).default([]),
     mode: generationModeSchema.default('chat'),
     target: z.string().max(40).nullable().default(null),
+    tweak: z.string().trim().min(1).max(200).nullable().default(null),
   })
   .superRefine((value, ctx) => {
     if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_REQUEST_BYTES) {
@@ -59,6 +60,13 @@ export const scoreSideSchema = z.object({
 export const scoreSchema = z.object({
   before: scoreSideSchema,
   after: scoreSideSchema,
+})
+
+export const changesSchema = z.array(z.string().trim().min(1).max(500)).min(1)
+
+export const variantsSchema = z.object({
+  concise: z.string().min(1),
+  detailed: z.string().min(1),
 })
 
 export const questionSchema = z
@@ -123,6 +131,9 @@ export const openModelResponseSchema = z
     questions: z.array(questionSchema).min(1).max(5).nullable(),
     optimizedPrompt: z.string().min(1).nullable(),
     score: scoreSchema.nullable(),
+    // Only checked when ready; whatever comes back alongside questions is discarded.
+    changes: z.array(z.string()).nullable(),
+    variants: z.object({ concise: z.string(), detailed: z.string() }).nullable(),
   })
   .superRefine((value, ctx) => {
     if (value.status === 'needs_clarification') {
@@ -197,6 +208,16 @@ export const openModelResponseSchema = z
           message: 'Score is required when the prompt is ready',
         })
       }
+
+      for (const [key, schema] of [
+        ['changes', changesSchema],
+        ['variants', variantsSchema],
+      ]) {
+        const result = schema.safeParse(value[key])
+        for (const issue of result.error?.issues ?? []) {
+          ctx.addIssue({ ...issue, path: [key, ...issue.path] })
+        }
+      }
     }
   })
 
@@ -204,6 +225,8 @@ export const finalModelResponseSchema = z
   .object({
     optimizedPrompt: z.string().min(1),
     score: scoreSchema,
+    changes: changesSchema,
+    variants: variantsSchema,
   })
   .strict()
 
@@ -220,6 +243,8 @@ const scoreWireSchema = z.object({
   }),
 })
 
+const variantsWireSchema = z.object({ concise: z.string(), detailed: z.string() })
+
 const openModelWireSchema = z.object({
   status: z.enum(['needs_clarification', 'ready']),
   questions: z
@@ -235,11 +260,15 @@ const openModelWireSchema = z.object({
     .nullable(),
   optimizedPrompt: z.string().nullable(),
   score: scoreWireSchema.nullable(),
+  changes: z.array(z.string()).nullable(),
+  variants: variantsWireSchema.nullable(),
 })
 
 const finalModelWireSchema = z.object({
   optimizedPrompt: z.string(),
   score: scoreWireSchema,
+  changes: z.array(z.string()),
+  variants: variantsWireSchema,
 })
 
 export const openModelJsonSchema = z.toJSONSchema(openModelWireSchema)
@@ -276,9 +305,13 @@ export function parseOpenModelResponse(value) {
     status: 'ready',
     optimizedPrompt: parsed.optimizedPrompt,
     score: parsed.score,
+    // The prompt asks for 2 to 4; trim extras rather than reject a usable response.
+    changes: parsed.changes.slice(0, 4),
+    variants: parsed.variants,
   }
 }
 
 export function parseFinalModelResponse(value) {
-  return finalModelResponseSchema.parse(value)
+  const parsed = finalModelResponseSchema.parse(value)
+  return { status: 'ready', ...parsed, changes: parsed.changes.slice(0, 4) }
 }

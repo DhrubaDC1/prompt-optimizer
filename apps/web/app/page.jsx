@@ -18,8 +18,10 @@ import {
   loadHistory,
   makeHistoryId,
   removeHistoryEntry,
+  togglePin,
 } from './history.js'
 import { INITIAL_STATE, PHASE, reducer } from './prompt-state.js'
+import { readShareHash } from './share.js'
 
 const ERROR_MESSAGES = {
   rate_limited: 'The optimizer is busy right now. Wait a moment and try again.',
@@ -93,6 +95,20 @@ export default function HomePage() {
 
   useEffect(() => {
     setHistory(loadHistory())
+
+    // A link pasted into an already-open tab only changes the fragment, so listen too.
+    function openShared() {
+      const shared = readShareHash(window.location.hash)
+      if (!shared) return
+      direction.current = 1
+      dispatch({ type: 'RESTORE', entry: shared })
+      // Drop the fragment so a reload or "Start over" doesn't reopen the shared prompt.
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+
+    openShared()
+    window.addEventListener('hashchange', openShared)
+    return () => window.removeEventListener('hashchange', openShared)
   }, [])
 
   async function runOptimize(request, replaceOriginal = false) {
@@ -124,7 +140,13 @@ export default function HomePage() {
       }
 
       if (body?.status === 'ready' && typeof body.optimizedPrompt === 'string') {
-        dispatch({ type: 'RESULT', optimizedPrompt: body.optimizedPrompt, score: body.score })
+        dispatch({
+          type: 'RESULT',
+          optimizedPrompt: body.optimizedPrompt,
+          score: body.score,
+          changes: body.changes,
+          variants: body.variants,
+        })
         setHistory((previous) =>
           addHistoryEntry(previous, {
             id: makeHistoryId(),
@@ -133,6 +155,7 @@ export default function HomePage() {
             mode: request.mode,
             target: request.target,
             score: body.score ?? null,
+            changes: body.changes ?? null,
             createdAt: Date.now(),
           }),
         )
@@ -209,7 +232,8 @@ export default function HomePage() {
                 dispatch({ type: 'RESTORE', entry })
               }}
               onRemove={(id) => setHistory((previous) => removeHistoryEntry(previous, id))}
-              onClear={() => setHistory(clearHistory())}
+              onPin={(id) => setHistory((previous) => togglePin(previous, id))}
+              onClear={() => setHistory((previous) => clearHistory(previous))}
             />
           </section>
         )}
@@ -231,6 +255,21 @@ export default function HomePage() {
             value={state.optimizedPrompt}
             original={state.originalPrompt}
             score={state.score}
+            changes={state.changes}
+            variants={state.variants}
+            variant={state.variant}
+            mode={state.mode}
+            target={state.target}
+            onSelectVariant={(variant) => dispatch({ type: 'SELECT_VARIANT', variant })}
+            onTweak={(tweak) =>
+              runOptimize({
+                prompt: state.optimizedPrompt,
+                clarifications: [],
+                mode: state.mode,
+                target: state.target,
+                tweak,
+              })
+            }
             onChange={(optimizedPrompt) => dispatch({ type: 'EDIT_RESULT', optimizedPrompt })}
             onStartOver={() => {
               direction.current = 1

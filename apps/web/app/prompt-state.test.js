@@ -96,6 +96,29 @@ test('restores a history entry directly into the result phase', () => {
   assert.deepEqual(restored.score, entry.score)
 })
 
+test('switches variants and keeps edits made to each one', () => {
+  const ready = reducer(INITIAL_STATE, {
+    type: 'RESULT',
+    optimizedPrompt: 'Balanced.',
+    score: null,
+    changes: ['Made it clearer.'],
+    variants: { concise: 'Short.', detailed: 'Long.' },
+  })
+  const concise = reducer(ready, { type: 'SELECT_VARIANT', variant: 'concise' })
+  const edited = reducer(concise, { type: 'EDIT_RESULT', optimizedPrompt: 'Short, edited.' })
+  const back = reducer(reducer(edited, { type: 'SELECT_VARIANT', variant: 'balanced' }), {
+    type: 'SELECT_VARIANT',
+    variant: 'concise',
+  })
+
+  assert.equal(ready.variant, 'balanced')
+  assert.deepEqual(ready.changes, ['Made it clearer.'])
+  assert.equal(concise.optimizedPrompt, 'Short.')
+  assert.equal(back.optimizedPrompt, 'Short, edited.')
+  assert.equal(reducer(back, { type: 'SELECT_VARIANT', variant: 'balanced' }).optimizedPrompt, 'Balanced.')
+  assert.equal(reducer(back, { type: 'START_OVER' }).variants, null)
+})
+
 test('restores a history entry whose target was removed as any model', () => {
   const entry = {
     originalPrompt: 'cat in space',

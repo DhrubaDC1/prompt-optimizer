@@ -38,6 +38,14 @@ export const cases = [
     { mode: 'agent' },
   ],
   [
+    'write an announcement for the team that our office moves to the new building next month',
+    'ready',
+    (result) =>
+      result.changes.length >= 1 &&
+      result.variants.concise.length < result.variants.detailed.length,
+    { tweak: 'More formal' },
+  ],
+  [
     'the login button on /login does nothing when clicked, fix it',
     'ready',
     (result) => /test|verif|confirm|check/i.test(result.optimizedPrompt),

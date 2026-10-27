@@ -61,21 +61,13 @@ export async function POST(request) {
   if (!parsed.success) return validationErrorResponse(parsed.error)
 
   const body = parsed.data
-  const isFinal = body.clarifications.length > 0
 
   try {
     const result = await optimize(body.prompt, body.clarifications, {
       mode: body.mode,
       target: body.target,
+      tweak: body.tweak,
     })
-
-    if (isFinal) {
-      return Response.json({
-        status: 'ready',
-        optimizedPrompt: result.optimizedPrompt,
-        score: result.score,
-      })
-    }
 
     return Response.json(result)
   } catch (error) {
