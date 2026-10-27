@@ -18,25 +18,25 @@ Output:
 
 Example: input "fix this\\n\\nfunction add(a,b){return a-b}" → optimizedPrompt "Fix the bug in this JavaScript function and return the corrected function.\\n\\nfunction add(a,b){return a-b}" (code kept verbatim).`
 
-const IMAGE_MODE_RULES = `3. Write the optimized prompt as a comma-separated list of concrete visual descriptors (subject, setting, composition, lighting, color, style, medium, camera/lens), not prose instructions or verbs like "generate" or "please".
-4. Add a negative-prompt style clause only when it removes a defect the user implied (e.g. "no text, no watermark"). Never invent style, medium, or composition choices the user did not state or clearly imply.
+const IMAGE_MODE_RULES = `3. Write the optimized prompt as a natural-language description of the image in one or a few sentences: subject, setting, composition, lighting, color, style or medium, and camera details for photos. Not a keyword list, and not requests like "please generate".
+4. Put any exact text that must appear in the image in quotes. These models take no separate negative prompt, so state an exclusion plainly (e.g. "no text or watermark") only when it removes a defect the user implied. Never invent style, medium, or composition choices the user did not state or clearly imply.
 
 Output:
 - No reasoning or commentary in any field.
-- optimizedPrompt holds only the descriptor list, ready to paste into an image model: no preamble, closing remark, or wrapping quotes.
+- optimizedPrompt holds only the image description, ready to paste into an image model: no preamble, closing remark, or wrapping quotes.
 - Write the optimized prompt and any questions in the language of the user's own instructions.
 
-Example: input "cat in space" → optimizedPrompt "orange tabby cat, astronaut helmet, floating in space, stars and nebula background, cinematic lighting, digital painting, highly detailed".`
+Example: input "cat in space" → optimizedPrompt "A cat floating weightlessly in outer space, surrounded by stars, with a distant nebula in the background."`
 
-const AGENT_MODE_RULES = `3. Structure the optimized prompt as agent instructions: role and goal, available tools and when to use each, explicit constraints, and stop or handoff conditions. Longer and more structured is correct here — do not compress agent instructions the way a chat prompt would be.
-4. Never invent tools, permissions, data sources, or escalation paths the user did not mention.
+const AGENT_MODE_RULES = `3. Write the optimized prompt as a task brief for a coding agent working in the user's repository: the goal, the context the user gave (files, components, error messages, stack), constraints and scope (what to leave alone), and how to tell the work is done (tests to pass, behavior to check). Use structure for multi-step tasks; keep a small fix short.
+4. Never invent file paths, commands, libraries, or project conventions the user did not mention. When the user gave no verification steps, describe them generically (e.g. "run the existing tests") rather than naming a command.
 
 Output:
 - No reasoning or commentary in any field.
-- optimizedPrompt holds only the rewritten agent instructions, addressed to the agent that will receive it: no preamble, closing remark, explanation of changes, or wrapping code fence or quotes.
+- optimizedPrompt holds only the task brief, addressed to the agent that will receive it: no preamble, closing remark, explanation of changes, or wrapping code fence or quotes.
 - Write the optimized prompt and any questions in the language of the user's own instructions.
 
-Example: input "make a bot that answers support emails" → optimizedPrompt with a role, the tools it may use (e.g. "look up order status", "issue a refund under $50"), and a stop condition (e.g. "escalate to a human for anything else").`
+Example: input "login button doesn't work, fix it" → optimizedPrompt "The login button does nothing when clicked. Reproduce the bug, find the root cause, and fix it, keeping the change limited to the login flow. Done when clicking the button logs the user in and the existing tests pass."`
 
 const MODE_RULES = {
   chat: CHAT_MODE_RULES,
@@ -47,7 +47,34 @@ const MODE_RULES = {
 const SCORE_LABELS = {
   chat: ['Clarity', 'Specificity', 'Constraints'],
   image: ['Subject', 'Style', 'Composition'],
-  agent: ['Role', 'Tools', 'Stop conditions'],
+  agent: ['Goal', 'Context', 'Verification'],
+}
+
+const TARGET_NOTES = {
+  chat: {
+    claude:
+      'Claude follows clear, direct instructions closely. Wrap pasted material or distinct sections in descriptive XML tags (e.g. <document>, <code>), and say what to do rather than what to avoid.',
+    chatgpt:
+      'Put the instructions first and separate them from pasted material with clear delimiters such as ### headings or triple quotes. Say what form the answer should take.',
+    gemini:
+      'Be specific about the task, constraints, and response format. When there is long pasted material, place it first and put the instruction or question after it.',
+    grok: 'Give direct, explicit instructions and state the desired tone and format rather than relying on its default voice.',
+  },
+  image: {
+    chatgpt:
+      'ChatGPT image generation follows detailed descriptions and renders text well: quote any exact text and say where it goes. Describe the aspect ratio in words (e.g. square, wide landscape) when the user implied one.',
+    gemini:
+      'Gemini image generation works best from a descriptive narrative rather than a keyword list. For photorealistic images use photography terms (shot type, lens, lighting); quote any exact text.',
+    grok: 'Grok image generation follows plain descriptions: lead with the subject, then setting, style, and lighting, and quote any exact text.',
+  },
+  agent: {
+    'claude-code':
+      'Claude Code reads project conventions from CLAUDE.md, so do not restate them. Point to the specific files, functions, or error messages the user mentioned, say how to verify the change, and for larger changes ask it to explore and plan before editing.',
+    codex:
+      'Codex reads project instructions from AGENTS.md, so do not restate them. Give greppable pointers the user mentioned (file paths, function names, error text), say how to verify the result, and keep it to one well-scoped task; split larger work into steps.',
+    antigravity:
+      'Antigravity plans its work and can check results in a browser. State the goal and the done condition up front, point to the files or screens the user mentioned, and for UI changes ask it to verify the result in the browser.',
+  },
 }
 
 function scoreRules(mode) {
@@ -78,7 +105,8 @@ function coreRules(mode, target) {
   if (!target) return rules
 
   const label = TARGET_LABELS[target] ?? target
-  return `${rules}\n\nTarget: optimize this prompt specifically for ${label}, using its conventions and known quirks, while following every rule above.`
+  const note = TARGET_NOTES[mode]?.[target] ?? 'Use its conventions and known quirks.'
+  return `${rules}\n\nTarget: optimize this prompt specifically for ${label}. ${note} Follow every rule above; where this note conflicts with them, the rules win.`
 }
 
 export function buildOpenSystemPrompt(mode, target) {

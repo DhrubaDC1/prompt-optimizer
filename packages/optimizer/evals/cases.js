@@ -25,9 +25,22 @@ export const cases = [
     { mode: 'image' },
   ],
   [
-    'make a bot that answers support emails',
+    'poster for a bakery grand opening that says "Fresh Daily"',
     'ready',
-    (result) => result.optimizedPrompt.length > 200,
+    (result) => result.optimizedPrompt.includes('"Fresh Daily"'),
+    { mode: 'image', target: 'chatgpt' },
+  ],
+  [
+    'add a dark mode toggle to the settings page that saves the choice in localStorage and follows prefers-color-scheme on first visit',
+    'ready',
+    (result) =>
+      result.score.after.subscores.map((s) => s.label).join(',') === 'Goal,Context,Verification',
     { mode: 'agent' },
+  ],
+  [
+    'the login button on /login does nothing when clicked, fix it',
+    'ready',
+    (result) => /test|verif|confirm|check/i.test(result.optimizedPrompt),
+    { mode: 'agent', target: 'claude-code' },
   ],
 ]

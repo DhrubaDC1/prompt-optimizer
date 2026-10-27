@@ -1,3 +1,5 @@
+import { TARGETS_BY_MODE } from '@prompt-optimizer/optimizer/modes'
+
 export const PHASE = {
   INPUT: 'input',
   LOADING: 'loading',
@@ -97,7 +99,10 @@ export function reducer(state, action) {
         prompt: action.entry.originalPrompt,
         originalPrompt: action.entry.originalPrompt,
         mode: action.entry.mode,
-        target: action.entry.target,
+        // History can hold targets that were later removed; the API would reject them.
+        target: TARGETS_BY_MODE[action.entry.mode]?.includes(action.entry.target)
+          ? action.entry.target
+          : null,
         optimizedPrompt: action.entry.optimizedPrompt,
         score: action.entry.score,
         error: null,

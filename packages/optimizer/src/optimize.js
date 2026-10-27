@@ -201,7 +201,12 @@ export async function optimize(prompt, clarifications = [], options = {}) {
     })
 
     try {
-      return parseAssistantContent(content, isFinal)
+      const result = parseAssistantContent(content, isFinal)
+      // The model occasionally double-escapes quoted image text; an image prompt never needs a literal \".
+      if (request.mode === 'image' && result.optimizedPrompt) {
+        result.optimizedPrompt = result.optimizedPrompt.replaceAll('\\"', '"')
+      }
+      return result
     } catch (error) {
       lastError = error
 

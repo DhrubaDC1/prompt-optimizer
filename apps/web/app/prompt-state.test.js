@@ -95,3 +95,17 @@ test('restores a history entry directly into the result phase', () => {
   assert.equal(restored.target, entry.target)
   assert.deepEqual(restored.score, entry.score)
 })
+
+test('restores a history entry whose target was removed as any model', () => {
+  const entry = {
+    originalPrompt: 'cat in space',
+    optimizedPrompt: 'A cat floating in space.',
+    mode: 'image',
+    target: 'midjourney',
+    score: null,
+  }
+  const restored = reducer(INITIAL_STATE, { type: 'RESTORE', entry })
+
+  assert.equal(restored.mode, 'image')
+  assert.equal(restored.target, null)
+})

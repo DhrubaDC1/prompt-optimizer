@@ -23,7 +23,9 @@ globalThis.fetch = async (url, init) => {
   }
 
   const content =
-    fetchMode === 'open'
+    fetchMode === 'escaped'
+      ? { status: 'ready', questions: null, optimizedPrompt: 'A sign reading \\"OPEN\\"', score }
+      : fetchMode === 'open'
       ? {
           status: 'ready',
           questions: null,
@@ -174,6 +176,15 @@ test('derives round without trusting client fields', async () => {
   assert.equal(body.score.before.overall, 40)
   assert.equal(body.score.after.overall, 90)
   assert.equal(geminiCalls, 1)
+})
+
+test('unescapes quotes in image prompts only', async () => {
+  fetchMode = 'escaped'
+  const image = await POST(request({ prompt: 'open sign', clarifications: [], mode: 'image' }))
+  const chat = await POST(request({ prompt: 'open sign', clarifications: [], mode: 'chat' }))
+
+  assert.equal((await image.json()).optimizedPrompt, 'A sign reading "OPEN"')
+  assert.equal((await chat.json()).optimizedPrompt, 'A sign reading \\"OPEN\\"')
 })
 
 test('maps optimizer failures without provider details', async () => {
