@@ -184,21 +184,24 @@ export default function HomePage() {
       >
         {state.phase === PHASE.INPUT && (
           <section className="input-screen" aria-labelledby="page-title">
-            <h1 id="page-title">Sharpen your prompt</h1>
+            <h1 id="page-title">
+              Sharpen your <span className="accent">prompt</span>
+            </h1>
             <p className="supporting-copy">
               Turn a rough idea into a clear prompt without changing what you mean.
             </p>
-            <ModeSelector
-              mode={state.mode}
-              target={state.target}
-              onModeChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
-              onTargetChange={(target) => dispatch({ type: 'SET_TARGET', target })}
-            />
             <PromptInput
               value={state.prompt}
               onChange={(prompt) => dispatch({ type: 'EDIT', prompt })}
               onSubmit={submitPrompt}
-            />
+            >
+              <ModeSelector
+                mode={state.mode}
+                target={state.target}
+                onModeChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
+                onTargetChange={(target) => dispatch({ type: 'SET_TARGET', target })}
+              />
+            </PromptInput>
             <RecentList
               entries={history}
               onSelect={(entry) => {
@@ -226,6 +229,7 @@ export default function HomePage() {
         {state.phase === PHASE.RESULT && (
           <ResultView
             value={state.optimizedPrompt}
+            original={state.originalPrompt}
             score={state.score}
             onChange={(optimizedPrompt) => dispatch({ type: 'EDIT_RESULT', optimizedPrompt })}
             onStartOver={() => {

@@ -11,17 +11,24 @@ function logCopy() {
   }).catch(() => {})
 }
 
-export default function ResultView({ value, score, onChange, onStartOver, onResubmit }) {
+export default function ResultView({ value, original, score, onChange, onStartOver, onResubmit }) {
   const textarea = useRef(null)
   const [copyStatus, setCopyStatus] = useState('')
+  const [showOriginal, setShowOriginal] = useState(false)
   const canResubmit = value.trim().length > 0 && value.length <= 8_000
+  const shown = showOriginal ? original : value
+
+  function toggle(nextShowOriginal) {
+    setShowOriginal(nextShowOriginal)
+    setCopyStatus('')
+  }
 
   async function copy() {
-    const copied = await copyText(value, textarea.current)
+    const copied = await copyText(shown, textarea.current)
 
     if (copied) {
       setCopyStatus('Copied to clipboard.')
-      logCopy()
+      if (!showOriginal) logCopy()
     } else {
       setCopyStatus('Text selected. Press Cmd/Ctrl+C to copy.')
     }
@@ -40,22 +47,50 @@ export default function ResultView({ value, score, onChange, onStartOver, onResu
         <h1 id="result-title">Your prompt is ready</h1>
         <ScoreDelta score={score} />
       </div>
-      <label className="result-label" htmlFor="optimized-prompt">
-        Editable prompt
-        <span>Change anything before copying or optimizing again.</span>
-      </label>
-      <textarea
-        ref={textarea}
-        id="optimized-prompt"
-        className="result-editor"
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value)
-          setCopyStatus('')
-        }}
-        onKeyDown={useShortcut}
-        rows={12}
-      />
+      <div className="result-panel">
+        <div className="result-bar">
+          <div className="mode-tabs" role="group" aria-label="Prompt version">
+            <button
+              type="button"
+              className="mode-tab"
+              aria-pressed={!showOriginal}
+              onClick={() => toggle(false)}
+            >
+              Optimized
+            </button>
+            <button
+              type="button"
+              className="mode-tab"
+              aria-pressed={showOriginal}
+              onClick={() => toggle(true)}
+              disabled={!original}
+            >
+              Original
+            </button>
+          </div>
+          <button className="primary-button" type="button" onClick={copy} disabled={!shown}>
+            Copy
+          </button>
+        </div>
+        <textarea
+          ref={textarea}
+          id="optimized-prompt"
+          className="result-editor"
+          aria-label={
+            showOriginal
+              ? 'Original prompt'
+              : 'Optimized prompt. Change anything before copying or optimizing again.'
+          }
+          value={shown}
+          readOnly={showOriginal}
+          onChange={(event) => {
+            onChange(event.target.value)
+            setCopyStatus('')
+          }}
+          onKeyDown={useShortcut}
+          rows={12}
+        />
+      </div>
 
       <div className="result-footer">
         <p className="copy-status" role="status" aria-live="polite" aria-atomic="true">
@@ -72,9 +107,6 @@ export default function ResultView({ value, score, onChange, onStartOver, onResu
             disabled={!canResubmit}
           >
             Optimize again
-          </button>
-          <button className="primary-button" type="button" onClick={copy} disabled={!value}>
-            Copy
           </button>
         </div>
       </div>
