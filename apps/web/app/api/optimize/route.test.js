@@ -223,6 +223,26 @@ test('rejects an oversized tweak before Gemini', async () => {
   assert.equal(geminiCalls, 0)
 })
 
+test('rate limits one client after a burst of 20, without touching others', async () => {
+  resetCalls()
+  fetchMode = 'open'
+  const from = (ip) => request({ prompt: 'Write a haiku', clarifications: [] }, { 'x-forwarded-for': ip })
+
+  for (let index = 0; index < 20; index += 1) {
+    assert.equal((await POST(from('203.0.113.9'))).status, 200)
+  }
+  const limited = await POST(from('203.0.113.9'))
+
+  assert.equal(limited.status, 429)
+  assert.deepEqual(await limited.json(), { error: 'rate_limited' })
+  assert.equal(limited.headers.get('retry-after'), '10')
+  assert.equal(geminiCalls, 20)
+  assert.equal((await POST(from('198.51.100.4'))).status, 200)
+
+  const invalid = await POST(request({ prompt: '', clarifications: [] }, { 'x-forwarded-for': '203.0.113.9' }))
+  assert.equal(invalid.status, 400)
+})
+
 test('maps optimizer failures without provider details', async () => {
   resetCalls()
   fetchMode = 'rate_limited'
