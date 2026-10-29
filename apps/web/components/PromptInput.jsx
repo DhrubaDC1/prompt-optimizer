@@ -6,7 +6,7 @@ const DRAW_TRANSITION = (reduceMotion, delay = 0) => ({
   opacity: { duration: 0.15, delay },
 })
 
-export default function PromptInput({ value, onChange, onSubmit }) {
+export default function PromptInput({ value, onChange, onSubmit, children }) {
   const [focused, setFocused] = useState(false)
   const reduceMotion = useReducedMotion()
   const tooLong = value.length > 8_000
@@ -43,6 +43,7 @@ export default function PromptInput({ value, onChange, onSubmit }) {
           autoFocus
         />
         <div className="form-footer">
+          {children}
           <div className="prompt-meta" aria-live="polite">
             {value.length > 6_000 && (
               <span className={tooLong ? 'counter counter-error' : 'counter'}>

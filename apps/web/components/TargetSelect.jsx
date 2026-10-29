@@ -65,9 +65,9 @@ export default function TargetSelect({ value, options, labels, onChange }) {
             className="target-select-list"
             role="listbox"
             aria-label="Target model"
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            initial={{ opacity: 0, y: 4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: reduceMotion ? 0 : 0.15, ease: [0.32, 0.72, 0, 1] }}
           >
             {items.map((item) => (

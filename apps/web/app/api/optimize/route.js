@@ -4,6 +4,8 @@ import {
   optimizeRequestSchema,
 } from '@prompt-optimizer/optimizer/schemas'
 
+import { clientKey, takeToken } from './rate-limit.js'
+
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
@@ -61,21 +63,22 @@ export async function POST(request) {
   if (!parsed.success) return validationErrorResponse(parsed.error)
 
   const body = parsed.data
-  const isFinal = body.clarifications.length > 0
+
+  // Checked after validation: only requests that would reach Gemini spend the allowance.
+  const retryAfter = takeToken(clientKey(request))
+  if (retryAfter) {
+    return Response.json(
+      { error: 'rate_limited' },
+      { status: 429, headers: { 'retry-after': String(retryAfter) } },
+    )
+  }
 
   try {
     const result = await optimize(body.prompt, body.clarifications, {
       mode: body.mode,
       target: body.target,
+      tweak: body.tweak,
     })
-
-    if (isFinal) {
-      return Response.json({
-        status: 'ready',
-        optimizedPrompt: result.optimizedPrompt,
-        score: result.score,
-      })
-    }
 
     return Response.json(result)
   } catch (error) {

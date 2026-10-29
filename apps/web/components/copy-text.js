@@ -11,6 +11,7 @@ export async function copyText(
     }
   } catch {}
 
+  if (!textarea) return false
   textarea.focus()
   textarea.select()
 

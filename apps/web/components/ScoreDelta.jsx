@@ -17,9 +17,6 @@ export default function ScoreDelta({ score }) {
 
   return (
     <div className="score-delta">
-      <div className="score-glow score-glow-top" aria-hidden="true" />
-      <div className="score-glow score-glow-bottom" aria-hidden="true" />
-
       <div className="score-overall">
         <span className="score-number score-before">{score.before.overall}</span>
         <Arrow className="score-arrow" />

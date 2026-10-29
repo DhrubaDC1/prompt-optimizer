@@ -12,8 +12,15 @@ function createMemoryStorage() {
 
 globalThis.localStorage = createMemoryStorage()
 
-const { loadHistory, addHistoryEntry, removeHistoryEntry, clearHistory, formatRelativeTime } =
-  await import('./history.js')
+const {
+  loadHistory,
+  addHistoryEntry,
+  removeHistoryEntry,
+  clearHistory,
+  togglePin,
+  visibleHistory,
+  formatRelativeTime,
+} = await import('./history.js')
 
 function entry(id, overrides = {}) {
   return {
@@ -61,10 +68,45 @@ test('removes a single entry by id and leaves the rest', () => {
 
 test('clears all entries', () => {
   let history = addHistoryEntry([], entry('a'))
-  history = clearHistory()
+  history = clearHistory(history)
 
   assert.deepEqual(history, [])
   assert.deepEqual(loadHistory(), [])
+})
+
+test('pinned entries survive the cap and clearing, and list first', () => {
+  let history = addHistoryEntry([], entry('keep'))
+  history = togglePin(history, 'keep')
+  for (let index = 0; index < 55; index += 1) {
+    history = addHistoryEntry(history, entry(`id-${index}`))
+  }
+
+  assert.equal(history.length, 51)
+  assert.ok(history.some((item) => item.id === 'keep'))
+  assert.equal(visibleHistory(history)[0].id, 'keep')
+  assert.deepEqual(
+    clearHistory(history).map((item) => item.id),
+    ['keep'],
+  )
+  assert.equal(togglePin(loadHistory(), 'keep')[0].pinned, false)
+})
+
+test('filters by original or optimized text, ignoring case', () => {
+  const history = [
+    entry('a', { originalPrompt: 'Haiku about RAIN' }),
+    entry('b', { optimizedPrompt: 'A logo for a bakery' }),
+    entry('c'),
+  ]
+
+  assert.deepEqual(
+    visibleHistory(history, 'rain').map((item) => item.id),
+    ['a'],
+  )
+  assert.deepEqual(
+    visibleHistory(history, ' BAKERY ').map((item) => item.id),
+    ['b'],
+  )
+  assert.equal(visibleHistory(history, '').length, 3)
 })
 
 test('formats relative time in coarsening buckets', () => {

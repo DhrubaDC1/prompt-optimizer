@@ -47,16 +47,36 @@ export function makeHistoryId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+// Pinned entries don't count toward the cap, so they are never pushed out.
 export function addHistoryEntry(history, entry) {
-  return saveHistory([entry, ...history].slice(0, MAX_ENTRIES))
+  const next = [entry, ...history]
+  const kept = new Set(next.filter((item) => !item.pinned).slice(0, MAX_ENTRIES))
+  return saveHistory(next.filter((item) => item.pinned || kept.has(item)))
 }
 
 export function removeHistoryEntry(history, id) {
   return saveHistory(history.filter((entry) => entry.id !== id))
 }
 
-export function clearHistory() {
-  return saveHistory([])
+export function togglePin(history, id) {
+  return saveHistory(
+    history.map((entry) => (entry.id === id ? { ...entry, pinned: !entry.pinned } : entry)),
+  )
+}
+
+export function clearHistory(history) {
+  return saveHistory(history.filter((entry) => entry.pinned))
+}
+
+// Pinned first, each group newest first, filtered by a case-insensitive text match.
+export function visibleHistory(history, query = '') {
+  const needle = query.trim().toLowerCase()
+  const matches = needle
+    ? history.filter((entry) =>
+        `${entry.originalPrompt}\n${entry.optimizedPrompt}`.toLowerCase().includes(needle),
+      )
+    : history
+  return [...matches.filter((entry) => entry.pinned), ...matches.filter((entry) => !entry.pinned)]
 }
 
 const MINUTE = 60

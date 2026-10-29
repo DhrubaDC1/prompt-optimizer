@@ -1,19 +1,19 @@
 export const GENERATION_MODES = ['chat', 'image', 'agent']
 
 export const TARGETS_BY_MODE = {
-  chat: ['claude', 'gpt', 'gemini'],
-  image: ['midjourney', 'dall-e', 'stable-diffusion', 'flux'],
-  agent: ['claude', 'gpt'],
+  chat: ['claude', 'chatgpt', 'gemini', 'grok'],
+  image: ['chatgpt', 'gemini', 'grok'],
+  agent: ['claude-code', 'codex', 'antigravity'],
 }
 
 export const TARGET_LABELS = {
   claude: 'Claude',
-  gpt: 'GPT',
+  chatgpt: 'ChatGPT',
   gemini: 'Gemini',
-  midjourney: 'Midjourney',
-  'dall-e': 'DALL-E',
-  'stable-diffusion': 'Stable Diffusion',
-  flux: 'Flux',
+  grok: 'Grok',
+  'claude-code': 'Claude Code',
+  codex: 'Codex',
+  antigravity: 'Antigravity',
 }
 
 export const MODE_LABELS = {

@@ -1,3 +1,5 @@
+import { TARGETS_BY_MODE } from '@prompt-optimizer/optimizer/modes'
+
 export const PHASE = {
   INPUT: 'input',
   LOADING: 'loading',
@@ -18,6 +20,9 @@ export const INITIAL_STATE = {
   requestPrompt: '',
   optimizedPrompt: '',
   score: null,
+  changes: null,
+  variants: null,
+  variant: 'balanced',
   error: null,
   retryRequest: null,
 }
@@ -87,9 +92,28 @@ export function reducer(state, action) {
         phase: PHASE.RESULT,
         optimizedPrompt: action.optimizedPrompt,
         score: action.score ?? null,
+        changes: action.changes ?? null,
+        variants: action.variants
+          ? { ...action.variants, balanced: action.optimizedPrompt }
+          : null,
+        variant: 'balanced',
       }
     case 'EDIT_RESULT':
-      return { ...state, optimizedPrompt: action.optimizedPrompt }
+      // Edits stick to the variant being edited, so switching away and back keeps them.
+      return {
+        ...state,
+        optimizedPrompt: action.optimizedPrompt,
+        variants: state.variants && {
+          ...state.variants,
+          [state.variant]: action.optimizedPrompt,
+        },
+      }
+    case 'SELECT_VARIANT':
+      return {
+        ...state,
+        variant: action.variant,
+        optimizedPrompt: state.variants[action.variant],
+      }
     case 'RESTORE':
       return {
         ...state,
@@ -97,9 +121,15 @@ export function reducer(state, action) {
         prompt: action.entry.originalPrompt,
         originalPrompt: action.entry.originalPrompt,
         mode: action.entry.mode,
-        target: action.entry.target,
+        // History can hold targets that were later removed; the API would reject them.
+        target: TARGETS_BY_MODE[action.entry.mode]?.includes(action.entry.target)
+          ? action.entry.target
+          : null,
         optimizedPrompt: action.entry.optimizedPrompt,
-        score: action.entry.score,
+        score: action.entry.score ?? null,
+        changes: action.entry.changes ?? null,
+        variants: null,
+        variant: 'balanced',
         error: null,
       }
     case 'START_OVER':
